@@ -1,8 +1,9 @@
 #ifndef PACKRAT_MATCH_HPP
 #define PACKRAT_MATCH_HPP
-#include <vector>
-#include <unordered_map>
+#include <iostream>
 #include <string>
+#include <unordered_map>
+#include <vector>
 namespace packrat
 {
     class Match
@@ -13,9 +14,9 @@ namespace packrat
         std::string* match_;
         int start_, end_;
         
-        Match flatten() const;
         Match(const Match&, const Match&);
         Match(const std::string&, const Match&);
+        std::ostream& print(std::ostream&,std::string) const;
     public:
         Match(const Match&);
         ~Match();
@@ -24,6 +25,7 @@ namespace packrat
         
         /* Match of a string */
         Match(int=-1,int=-1);
+        Match(int,int,const std::string&);
         
         /* names a match, extending the parse tree */
         Match operator() (const std::string&) const;
@@ -55,6 +57,12 @@ namespace packrat
         
         int length() const;
         int size() const;
+        
+        Match flatten() const;
+        
+        std::ostream& print(std::ostream&) const;
     };
 }
+
+std::ostream& operator<<(std::ostream&,const packrat::Match&);
 #endif

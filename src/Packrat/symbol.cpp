@@ -75,6 +75,7 @@ Symbol Symbol::interpretString(const std::string& input, size_t& index, char ter
     Symbol acc = createMatch(""), mul = createSet(""), last = createMatch("");
     string match = "";
     char negate = 0;
+    size_t sum = 0;
     for(; index < input.length(); ++index)
     {
         switch(input[index])
@@ -85,10 +86,24 @@ Symbol Symbol::interpretString(const std::string& input, size_t& index, char ter
             else
                 negate = 1;
             break;
+        case '_':
+            last = last.flatten();
+            break;
         case '\\':
             acc = acc & last;
             if(++index < input.length())
-                last = createMatch(escape(input[index]));
+            {
+                if(input[index] >= '0' && input[index] <= '9')
+                {
+                    sum = 0;
+                    for(;index < input.length() && input[index] >= '0' && input[index] <= '9'; ++index)
+                        sum = 10*sum + (int)(input[index] - '0');
+                    --index;
+                    last = createNext(sum);
+                }
+                else
+                    last = createMatch(escape(input[index]));
+            }
             if(negate)
             {
                 last = !last;
@@ -399,20 +414,22 @@ Symbol Symbol::createLookup(const string& name)
 }
 Match Symbol::match(const Parser& p, const string& s, size_t start, Match** table) const
 {
-    Match m(start, start), ret(start);
+    Match m(start, start, ""), ret(start);
     switch(type_)
     {
+    case FLATTEN:
+        return left_->match(p, s, start, table).flatten();
     case NAMING:
         return left_->match(p, s, start, table)(*match_);
     case MATCH:
         if(start < s.length() && *match_ == s.substr(start, match_->length()))
-            return Match(start, start + match_->length());
+            return Match(start, start + match_->length(), *match_);
         return Match(start);
     case SET:
         if(start < s.length())
             for(size_t i = 0; i < match_->length(); i++)
                 if((*match_)[i] == s[start])
-                    return Match(start, start + 1);
+                    return Match(start, start + 1, s.substr(start, 1));
         return Match(start);
     case REPEAT:
         if(count_ < 0)
@@ -439,12 +456,12 @@ Match Symbol::match(const Parser& p, const string& s, size_t start, Match** tabl
         ret = left_->match(p, s, start, table);
         return ret.end() == -1 ? m : Match(start);
     case NEXT:
-        return (start + count_ <= s.length()) ? Match(start, start + count_) : Match(start);
+        return (start + count_ <= s.length()) ? Match(start, start + count_, s.substr(start, count_)) : Match(start);
     case LOOKUP:
         return p.lookup(*match_, s, start, table);
     case CONCAT:
         ret = left_->match(p, s, start, table);
-        return ret & right_->match(p, s, ret.end(), table);
+        return ret ? ret & right_->match(p, s, ret.end(), table) : ret;
     case PUSH_FIRST:
         return left_->match(p, s, start, table) >> right_->match(p, s, ret.end(), table);
     case PUSH_LAST:
@@ -452,10 +469,15 @@ Match Symbol::match(const Parser& p, const string& s, size_t start, Match** tabl
     case EITHER:
         return left_->match(p, s, start, table) || right_->match(p, s, start, table);
     case CONSTANT:
-        return Match(start, start);
+        return Match(start, start, *match_);
     default:
         return Match(-1);
     }
+}
+
+Symbol Symbol::flatten() const
+{
+    return Symbol(FLATTEN, *this);
 }
 
 Symbol Symbol::operator&(const Symbol& rhs) const

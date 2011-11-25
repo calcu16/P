@@ -1,4 +1,5 @@
 #include "match.hpp"
+#include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <string>
@@ -6,29 +7,39 @@ using namespace std;
 using namespace packrat;
 
 Match::Match(int start, int end)
-    : start_(start), end_(end)
+    : match_(new string()), start_(start), end_(end)
+{
+}
+
+Match::Match(int start, int end, const string& m)
+    : match_(new string(m)), start_(start), end_(end)
 {
 }
 
 Match::Match(const Match& copy)
-    : start_(copy.start_), end_(copy.end_)
+    : match_(copy.match_ == NULL ? NULL : new string(*copy.match_)),
+        start_(copy.start_), end_(copy.end_)
 {
+    for(unordered_map<string, Match*>::const_iterator i = copy.tree_.begin(); i != copy.tree_.end(); ++i)
+        tree_.insert(pair<string, Match*>(i->first, new Match(*i->second)));
+    for(vector<Match*>::const_iterator i = copy.array_.begin(); i != copy.array_.end(); ++i)
+        array_.push_back(new Match(**i));
 }
 
 Match::Match(const Match& left, const Match& right)
-    : start_(left.start_), end_(right.end_)
+    : match_(NULL), start_(left.start_), end_(right.end_)
 {
     Match fl = left.flatten(), rl = right.flatten();
     for(unordered_map<string, Match*>::iterator i = fl.tree_.begin(); i != fl.tree_.end(); ++i)
-        tree_[i->first] = i->second;
+        tree_.insert(pair<string, Match*>(i->first, new Match(*i->second)));
     for(unordered_map<string, Match*>::iterator i = rl.tree_.begin(); i != rl.tree_.end(); ++i)
-        tree_[i->first] = i->second;
-    if(tree_.size() == 0)
+        tree_.insert(pair<string, Match*>(i->first, new Match(*i->second)));
+    if(tree_.size() == 0 && left.match_ && right.match_)
         match_ = new string(*left.match_ + *right.match_);
 }
 
 Match::Match(const std::string& name, const Match& other)
-    : start_(other.start_), end_(other.end_)
+    : match_(NULL), start_(other.start_), end_(other.end_)
 {
     tree_[name] = new Match(other);
 }
@@ -185,4 +196,31 @@ int Match::size() const
 int Match::length() const
 {
     return array_.size();
+}
+
+ostream& Match::print(ostream& out, string tab) const
+{
+    string ntab = tab + "\t";
+    size_t i = 0;
+    if(size())
+        for(unordered_map<string, Match*>::const_iterator i = tree_.begin(); i != tree_.end(); i++)
+            i->second->print(out << tab << i->first << endl, ntab);
+    else if(length())
+        for(vector<Match*>::const_iterator j = array_.begin(); j != array_.end(); j++, i++)
+            (*j)->print(out << tab << i << endl, ntab);
+    else
+    {
+        out << tab << ": \"" << *match_ << '"' << endl;
+    }
+    return out;
+}
+
+ostream& Match::print(ostream& out) const
+{
+    return print(out, "");
+}
+
+ostream& operator<<(ostream& out, const Match& m)
+{
+    return m.print(out);
 }

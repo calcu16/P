@@ -5,5 +5,5 @@ namespace packrat
 
 namespace pparser
 {
-    Parser* createParser();
+    packrat::Parser* createParser();
 }
