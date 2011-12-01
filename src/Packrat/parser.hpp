@@ -6,7 +6,7 @@
 namespace packrat
 {
     class Symbol;
-    class Match;
+    class AST;
     class Parser
     {
     private:
@@ -15,13 +15,23 @@ namespace packrat
     public:
         Parser();
         Parser(const Parser&);
+		template<typename... Args>
+		Parser(Args...);
         ~Parser();
         Parser& swap(Parser&);
         Parser& operator=(Parser);
-        size_t addSymbol(const std::string&, const Symbol&);
-        Match lookup(const std::string&, const std::string&, size_t, Match**) const;
+		
+        size_t size() const;
         
-        Match parse(const std::string&, const std::string&) const;
+        Parser& add(const std::string&, const Symbol&);
+        Parser& add(const std::string&, const std::string&);
+		template<typename... Args>
+		Parser& add(const std::string&, const Symbol&, Args...);
+		template<typename... Args>
+		Parser& add(const std::string&, const std::string&, Args...);
+        AST lookup(const std::string&, const std::string&, size_t, AST**) const;
+        AST parse(const std::string&, const std::string&) const;
     };
 }
+#include "parser_private.hpp"
 #endif

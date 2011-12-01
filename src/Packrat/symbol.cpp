@@ -1,12 +1,15 @@
 #include "symbol.hpp"
 #include "parser.hpp"
-#include "match.hpp"
+#include "ast.hpp"
 #include <string>
 #include <stddef.h>
 #include <iostream>
+#include <sstream>
 
 using namespace packrat;
 using namespace std;
+
+// Symbol::interpreter = Parser();
 
 Symbol::Symbol()
     : type_(NEXT), match_ (NULL), count_(0),
@@ -70,285 +73,173 @@ char Symbol::escape(char c)
     }
 }
 
-Symbol Symbol::interpretString(const std::string& input, size_t& index, char term)
+const Parser* Symbol::interpreter = NULL;
+
+template<typename T>
+static T fromString(const string& input)
 {
-    Symbol acc = createMatch(""), mul = createSet(""), last = createMatch("");
-    string match = "";
-    char negate = 0;
-    size_t sum = 0;
-    for(; index < input.length(); ++index)
+    T a;
+    istringstream(input) >> a;
+    return a;
+}
+
+int Symbol::matchToInt(const AST& tree)
+{
+    string type = *tree["type"];
+    if(type == "int")
+        return matchToInt(tree["value"]);
+    return fromString<int>(*tree["value"]);
+}
+
+Symbol Symbol::matchToSymbol(const AST& tree)
+{
+    string type = *tree["type"];
+    if(type == "expr")
     {
-        switch(input[index])
-        {
-        case '!':
-            if(negate)
-                negate ^= 1;
-            else
-                negate = 1;
-            break;
-        case '_':
-            last = last.flatten();
-            break;
-        case '\\':
-            acc = acc & last;
-            if(++index < input.length())
-            {
-                if(input[index] >= '0' && input[index] <= '9')
-                {
-                    sum = 0;
-                    for(;index < input.length() && input[index] >= '0' && input[index] <= '9'; ++index)
-                        sum = 10*sum + (int)(input[index] - '0');
-                    --index;
-                    last = createNext(sum);
-                }
-                else
-                    last = createMatch(escape(input[index]));
-            }
-            if(negate)
-            {
-                last = !last;
-                if(!(negate & 1))
-                    last = !last;
-            }
-            negate = 0;
-            break;
-        case '[':
-            acc = acc & last;
-            match = "";
-            if(++index < input.length())
-            {
-                switch(input[index])
-                {
-                case ']':
-                case '-':
-                    match += input[index++];
-                    break;
-                default: ;
-                }
-            }
-            for(; index < input.length(); ++index)
-            {
-                switch(input[index])
-                {
-                case '-':
-                    if(++index < input.length())
-                        for(char c = match[match.length()-1]; c++ < input[index]; )
-                            match += c;
-                    break;
-                case ']':
-                    goto exit_main;
-                case '\\':
-                    if(++index < input.length())
-                        match += escape(input[index]);
-                    break;
-                default:
-                    match += input[index];
-                }
-            }
-            exit_main:
-            last = createSet(match);
-            if(negate)
-            {
-                last = !last;
-                if(!(negate & 1))
-                    last = !last;
-            }
-            negate = 0;
-            match = "";
-            break;
-        case '(':
-            acc = acc & last;
-            last = interpretString(input, ++index, ')');
-            if(negate)
-            {
-                last = !last;
-                if(!(negate & 1))
-                    last = !last;
-            }
-            negate = 0;
-            match = "";
-            break;
-        case ')':
-        case '>':
-            if(input[index] == term)
-            {
-                if(negate)
-                {
-                    acc = acc & last;
-                    last = !createNext(1);
-                    if(!(negate & 1))
-                        last = !last;
-                }
-                return mul | (acc & last);
-            }
-            acc = acc & last;
-            last = createMatch(input[index]);
-            if(negate)
-            {
-                last = !last;
-                if(!(negate & 1))
-                    last = !last;
-            }
-            negate = 0;
-            break;
-        case '{':
-            acc = acc & last;
-            match = "";
-            for(++index; index < input.length(); ++index)
-            {
-                switch(input[index])
-                {
-                case '}':
-                    goto exit_main_2;
-                case '\\':
-                    if(++index < input.length())
-                        match += escape(input[index]);
-                default:
-                    match += input[index];
-                }
-            }
-            exit_main_2:
-            last = createLookup(match);
-            if(negate)
-            {
-                last = !last;
-                if(!(negate & 1))
-                    last = !last;
-            }
-            negate = 0;
-            match = "";
-            break;
-        case '<':
-            acc = acc & last;
-            for(++index; index < input.length(); ++index)
-            {
-                switch(input[index])
-                {
-                case '=':
-                case ':':
-                case '>':
-                    goto exit_main_3;
-                case '\\':
-                    if(++index < input.length())
-                        match += escape(input[index]);
-                    break;
-                default:
-                    match += input[index];
-                }
-            }
-            exit_main_3:
-            if(input[index] == '>')
-            {
-                last = createMatch("")(match);
-                ++index;
-            }
-            else if(input[index] == '=')
-            {
-                string value = "";
-                for(++index; index < input.length(); ++index)
-                {
-                    switch(input[index])
-                    {
-                    case '>':
-                        goto exit_main_4;
-                    case '\\':
-                        if(++index < input.length())
-                            value += escape(input[index]);
-                        break;
-                    default:
-                        value += input[index];
-                    }
-                }
-                exit_main_4:
-                last = constant(match, value);
-            }
-            else
-                last = interpretString(input, ++index, '>')(match);
-            if(negate)
-            {
-                last = !last;
-                if(!(negate & 1))
-                    last = !last;
-            }
-            negate = 0;
-            match = "";
-            break;
-        case '*':
-            if(negate)
-            {
-                acc = acc & last;
-                if(negate & 1)
-                    last = !createNext(1);
-                else
-                    last = !!createNext(1);
-            }
-            last = last ^ 0;
-            negate = 0;
-            break;
-        case '+':
-            if(negate)
-            {
-                acc = acc & last;
-                if(negate & 1)
-                    last = !createNext(1);
-                else
-                    last = !!createNext(1);
-            }
-            last = last ^ 1;
-            negate = 0;
-            break;
-        case '?':
-            if(negate)
-            {
-                acc = acc & last;
-                if(negate & 1)
-                    last = !createNext(1);
-                else
-                    last = !!createNext(1);
-            }
-            last = last ^ -1;
-            negate = 0;
-            break;
-        case '|':
-            if(negate)
-            {
-                acc = acc & last;
-                last = !createNext(1);
-                if(!(negate & 1))
-                    last = !last;
-            }
-            negate = 0;
-            mul = mul | (acc & last);
-            acc = createMatch("");
-            last = createMatch("");
-            break;
-        default:
-            acc = acc & last;
-            last = createMatch(input[index]);
-            if(negate)
-            {
-                last = !last;
-                if(!(negate & 1))
-                    last = !last;
-            }
-            negate = 0;
-        }
+        return matchToSymbol(tree["value"]);
+    } else if(type == "ordered") {
+        Symbol sum = createSet("");
+        for(AST::const_iterator i = tree["value"].begin(); i != tree["value"].end(); ++i)
+            sum = sum | matchToSymbol(*i);
+        return sum;
+    } else if(type == "append") {
+        return matchToSymbol(tree["value"]) >> matchToSymbol(tree["tail"]);
+    } else if(type == "concat") {
+        Symbol prod = createMatch("");
+        for(AST::const_iterator i = tree["value"].begin(); i != tree["value"].end(); ++i)
+            prod = prod & matchToSymbol(*i);
+        if(tree["eof"])
+            prod = prod & !createNext(1);
+        return prod;
+    } else if(type == "lookup") {
+        return createLookup(*tree["value"]);
+    } else if(type == "next") {
+        return createNext(matchToInt(tree["value"]));
+    } else if(type == "name") {
+        string op = *tree["op"], name = *tree["name"];
+        if(op == "")
+            return constant("")(name);
+        else if(op == "=")
+            return constant(*tree["value"])(name);
+        else if(op == ":")
+            return matchToSymbol(tree["value"])(name);
+    } else if(type == "not") {
+        return !matchToSymbol(tree["value"]);
+    } else if(type == "rep") {
+        string op = *tree["op"];
+        if(op == "*")
+            return matchToSymbol(tree["value"])^0;
+        else if(op == "+")
+            return matchToSymbol(tree["value"])^1;
+        else if(op == "?")
+            return matchToSymbol(tree["value"])^-1;
+    } else if(type == "set") {
+        Symbol sum = createSet("");
+        AST options = tree["value"];
+        if(tree["first"])
+            options = tree["first"] >> options;
+        if(tree["last"])
+            options = options << tree["last"];
+        for(AST::iterator i = options.begin(); i != options.end(); ++i)
+            sum = sum | matchToSymbol(*i);
+        return sum;
+    } else if(type == "match") {
+        return matchToSymbol(tree["value"]);
+    } else if(type == "escape") {
+        return createMatch((*tree["value"])[0]);
+    } else if(type == "cnum") {
+        return createMatch((char)matchToInt(tree["value"]));
+    } else if(type == "char") {
+        return createMatch(*tree["value"]);
+    } else if(type == "none") {
+        cerr << "Error : Unable to parse input" << endl;
+        return Symbol();
     }
-    if(negate)
-    {
-        acc = acc & last;
-        last = !createNext(1);
-        if(!(negate & 1))
-            last = !last;
-    }
-    return mul | (acc & last);
+    cerr << "Error : Unrecognized match " << tree << endl;
+    return createSet("");
+}
+Symbol Symbol::interpretString(const std::string& input)
+{
+    if(interpreter == NULL)
+        interpreter = new Parser(
+            "alpha", createSet('a', 'z') | createSet('A', 'Z'),
+            "ddigit", createSet('0', '9'),
+            "dint", constant("decimal")("type") & !createMatch("0")
+                    & (createLookup("ddigit")^1).flatten()("value"),
+            "int", constant("int")("type") & createLookup("dint")("value"),
+            "anum", createMatch("_") | createLookup("alpha")
+                    | createLookup("ddigit"),
+            "char", constant("char")("type") & createNext(1)("value"),
+            "reserved", createSet("_:|!*+?{}[]()<>\\"),
+            "range", constant("range")("type")
+                    & ((createSet('a', 'z')("left") & createMatch("-")
+                            & createSet('a', 'z')("right"))
+                        | (createSet('A', 'Z')("left") & createMatch("-")
+                            & createSet('A', 'Z')("right"))
+                        | (createSet('0', '9')("left") & createMatch("-")
+                            & createSet('0', '9')("right"))),
+            "escape", createMatch("\\")
+                    & ((constant("cnum")("type") & createLookup("int")("value"))
+                        | (constant("escape")("type") & createNext(1)("value"))),
+            "match", constant("match")("type")
+                    & (createLookup("escape")
+                        | (!createLookup("reserved")
+                            & createLookup("char")))("value"),
+            "set", constant("set")("type") & createMatch("[")
+                    & (((constant("char")("type")
+                        & (createMatch("]")
+                            | createMatch("-"))("value"))("first"))^-1)
+                    & ((createLookup("range") 
+                        | (constant("match") & !createSet("-]\\") & createLookup("char"))
+                        | createLookup("escape"))^0)("value")
+                    & ((constant("char")("type") & createMatch("-")("value"))("last")^-1)
+                    & createMatch("]"),
+            "rep", constant("rep")("type") & createLookup("atom")("value")
+                    & (createMatch("*") | createMatch("+")
+                        | createMatch("?"))("op")
+                    & (createMatch("_")("flatten") ^ -1),
+            "not", constant("not")("type") & createMatch("!")
+                    & createLookup("maybe_not")("value"),
+            "name", constant("name")("type") & createMatch("<")
+                    & (createLookup("anum")^0).flatten()("name")
+                    & ((createMatch("=")("op")
+                            & (createLookup("anum")^0).flatten()("value"))
+                        | (createMatch(":")("op")
+                            & createLookup("expr")("value"))
+                        | (constant("")("op")))
+                    & createMatch(">"),
+            "lookup", constant("lookup")("type") & createMatch("{")
+                    & ((createLookup("alpha") | createMatch("_"))
+                        >> (createLookup("anum")^0)).flatten()("value")
+                    & createMatch("}"),
+            "next",  constant("next")("type") & createMatch("{")
+                    & createLookup("int")("value") & createMatch("}"),
+            "subexpr", createMatch("(") & createLookup("expr") & createMatch(")"),
+            "atom", createLookup("match") | createLookup("set")
+                    | createLookup("subexpr") | createLookup("name")
+                    | createLookup("next") | createLookup("lookup"),
+            "maybe_rep", createLookup("rep") | createLookup("atom"),
+            "maybe_not", createLookup("not") | createLookup("maybe_rep"),
+            "concat", constant("concat")("type")
+                    & (createLookup("maybe_not")^0)("value")
+                    & (createMatch("!")("eof")^-1),
+            "append", constant("append")("type") & createLookup("concat")("value")
+                    & createMatch(":") & createLookup("maybe_append")("tail"),
+            "maybe_append", createLookup("append") | createLookup("concat"),
+            "ordered", constant("ordered")("type") & (createLookup("maybe_append")  >>
+                    ((createMatch("|") & (createLookup("maybe_append")))^0))("value"),
+            "expr", constant("expr")("type") & createLookup("ordered")("value"),
+            "input", (createLookup("expr") | constant("none")("type"))
+                    & !createNext(1)
+        );
+    return matchToSymbol(interpreter->parse("input", input));
 }
 
 Symbol::Symbol(const string& match)
     : match_(NULL), left_(NULL), right_(NULL)
 {
-    size_t temp = 0;
-    Symbol s = Symbol::interpretString(match, temp, '\0');
+//    size_t temp = 0;
+    Symbol s(interpretString(match));
     swap(s);
 }
 
@@ -390,7 +281,10 @@ Symbol Symbol::createMatch(char match)
     temp.append(1, match);
     return Symbol(MATCH, temp);
 }
-
+Symbol Symbol::constant(const string& value)
+{
+    return Symbol(CONSTANT, value);
+}
 Symbol Symbol::constant(const string& name, const string& value)
 {
     return Symbol(name, Symbol(CONSTANT, value));
@@ -398,6 +292,14 @@ Symbol Symbol::constant(const string& name, const string& value)
 
 Symbol Symbol::createSet(const string& set)
 {
+    return Symbol(SET, set);
+}
+
+Symbol Symbol::createSet(char s, char e)
+{
+    string set = "";
+    for(; s <= e; s++)
+        set += s;
     return Symbol(SET, set);
 }
 
@@ -412,9 +314,9 @@ Symbol Symbol::createLookup(const string& name)
 {
     return Symbol(LOOKUP, name);
 }
-Match Symbol::match(const Parser& p, const string& s, size_t start, Match** table) const
+AST Symbol::match(const Parser& p, const string& s, size_t start, AST** table) const
 {
-    Match m(start, start, ""), ret(start);
+    AST m(start, start, ""), ret(start);
     switch(type_)
     {
     case FLATTEN:
@@ -423,21 +325,21 @@ Match Symbol::match(const Parser& p, const string& s, size_t start, Match** tabl
         return left_->match(p, s, start, table)(*match_);
     case MATCH:
         if(start < s.length() && *match_ == s.substr(start, match_->length()))
-            return Match(start, start + match_->length(), *match_);
-        return Match(start);
+            return AST(start, start + match_->length(), *match_);
+        return AST(start);
     case SET:
         if(start < s.length())
             for(size_t i = 0; i < match_->length(); i++)
                 if((*match_)[i] == s[start])
-                    return Match(start, start + 1, s.substr(start, 1));
-        return Match(start);
+                    return AST(start, start + 1, s.substr(start, 1));
+        return AST(start);
     case REPEAT:
         if(count_ < 0)
         {
             for(int i = 0; i <= -count_; i++)
             {
-                ret = left_->match(p, s, m.end(), table);
-                if(ret.end() == -1)
+                ret = left_->match(p, s, m.endc(), table);
+                if(ret.endc() == -1)
                     return m;
                 m = m << ret;
             }
@@ -445,33 +347,41 @@ Match Symbol::match(const Parser& p, const string& s, size_t start, Match** tabl
         }
         for(int i = 0; ; i++)
         {
-            ret = left_->match(p, s, m.end(), table);
+            ret = left_->match(p, s, m.endc(), table);
             if(!ret)
-                return i >= count_ ? m : Match(start);
+                return i >= count_ ? m : AST(start);
             m = m << ret;
-            if((size_t)ret.end() == start)
+            if((size_t)ret.endc() == start)
                 return m << ret;
         }
     case NOT:
         ret = left_->match(p, s, start, table);
-        return ret.end() == -1 ? m : Match(start);
+        return ret.endc() == -1 ? m : AST(start);
     case NEXT:
-        return (start + count_ <= s.length()) ? Match(start, start + count_, s.substr(start, count_)) : Match(start);
+        return (start + count_ <= s.length()) ? AST(start, start + (count_ < 0 ? 0 : count_), s.substr(start, count_)) : AST(start);
     case LOOKUP:
         return p.lookup(*match_, s, start, table);
     case CONCAT:
         ret = left_->match(p, s, start, table);
-        return ret ? ret & right_->match(p, s, ret.end(), table) : ret;
+        return ret ? ret + right_->match(p, s, ret.endc(), table) : ret;
     case PUSH_FIRST:
-        return left_->match(p, s, start, table) >> right_->match(p, s, ret.end(), table);
+        ret = left_->match(p, s, start, table);
+        if(ret)
+            return ret >> right_->match(p, s, ret.endc(), table);
+        return AST(start);
     case PUSH_LAST:
-        return left_->match(p, s, start, table) << right_->match(p, s, ret.end(), table);
+        left_->match(p, s, start, table);
+        if(ret)
+            return ret << right_->match(p, s, ret.endc(), table);
+        return AST(start);
     case EITHER:
-        return left_->match(p, s, start, table) || right_->match(p, s, start, table);
+        if((ret = left_->match(p, s, start, table)))
+            return ret;
+        return right_->match(p, s, start, table);
     case CONSTANT:
-        return Match(start, start, *match_);
+        return AST(start, start, *match_);
     default:
-        return Match(-1);
+        return AST();
     }
 }
 
@@ -482,6 +392,10 @@ Symbol Symbol::flatten() const
 
 Symbol Symbol::operator&(const Symbol& rhs) const
 {
+    if(type_ == SET && *match_ == "")
+        return *this;
+    if(rhs.type_ == SET && *rhs.match_ == "")
+        return rhs;
     if(type_ == MATCH && rhs.type_ == MATCH)
         return Symbol(MATCH, *match_ + *rhs.match_);
     if(type_ == MATCH && *match_ == "")
@@ -499,6 +413,12 @@ Symbol Symbol::operator|(const Symbol& rhs) const
         return rhs;
     if(rhs.type_ == SET && *rhs.match_ == "")
         return *this;
+    if(type_ == MATCH && match_->length() == 1 && rhs.type_ == MATCH && rhs.match_->length() == 1)
+        return Symbol(SET, *match_ + *rhs.match_);
+    if(type_ == SET && rhs.type_ == MATCH && rhs.match_->length() == 1)
+        return Symbol(SET, *match_ + *rhs.match_);
+    if(rhs.type_ == SET && type_ == MATCH && match_->length() == 1)
+        return Symbol(SET, *match_ + *rhs.match_);
     return Symbol(EITHER, *this, rhs);
 }
 

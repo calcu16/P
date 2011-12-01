@@ -4,11 +4,13 @@
 namespace packrat
 {
     class Parser;
-    class Match;
+    class AST;
     
     class Symbol
     {
     private:
+        static void createInterpreter();
+        
         enum Type { NONE, MATCH, SET, RANGE, NEXT,
                     LOOKUP, REPEAT, CONCAT, EITHER,
                     NAMING, PUSH_FIRST, PUSH_LAST, NOT, CONSTANT,
@@ -28,8 +30,11 @@ namespace packrat
         Symbol(const std::string&, const Symbol&);
         
         static char escape(char);
-        static Symbol interpretString(const std::string&, size_t&, char);
+        static Symbol interpretString(const std::string&);
         std::ostream& print(std::ostream&,std::string) const;
+        
+        static int matchToInt(const AST& tree);
+        static Symbol matchToSymbol(const AST& tree);
     public:
         Symbol(const Symbol&);
         Symbol(const std::string&);
@@ -37,12 +42,14 @@ namespace packrat
         
         static Symbol createMatch(const std::string&);
         static Symbol createMatch(char);
+        static Symbol constant(const std::string&);
         static Symbol constant(const std::string&, const std::string&);
         static Symbol createSet(const std::string&);
+        static Symbol createSet(char, char);
         static Symbol createNext(int=1);
         static Symbol createLookup(const std::string&);
         Symbol flatten() const;
-        Match match(const Parser&, const std::string&, size_t, Match**) const;
+        AST match(const Parser&, const std::string&, size_t, AST**) const;
         
         void swap(Symbol&);
         
@@ -56,6 +63,8 @@ namespace packrat
         
         Symbol operator() (const std::string&) const;
         std::ostream& print(std::ostream&) const;
+    private:
+        static const Parser *interpreter;
     };
 }
 std::ostream& operator<<(std::ostream&,const packrat::Symbol&);
