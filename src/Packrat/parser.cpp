@@ -6,9 +6,13 @@
 #include <vector>
 using namespace std;
 using namespace packrat;
+
+const Parser* Parser::PParser = NULL;
+
 Parser::Parser()
 {
 }
+
 Parser::Parser(const Parser& copy)
     : lookup_(copy.lookup_)
 {
@@ -16,12 +20,13 @@ Parser::Parser(const Parser& copy)
         symbols_[i] = new Symbol(*copy.symbols_[i]);
 }
 
-
 Parser::~Parser()
 {
     for(size_t i = 0; i < symbols_.size(); i++)
         delete symbols_[i];
 }
+
+
 
 Parser& Parser::swap(Parser& other)
 {
@@ -41,6 +46,7 @@ size_t Parser::size() const
 {
     return symbols_.size();
 }
+
 
 Parser& Parser::add(const std::string& name, const Symbol& value)
 {

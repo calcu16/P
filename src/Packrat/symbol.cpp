@@ -115,7 +115,9 @@ Symbol Symbol::matchToSymbol(const AST& tree)
         return createLookup(*tree["value"]);
     } else if(type == "next") {
         return createNext(matchToInt(tree["value"]));
-    } else if(type == "name") {
+    } else if(type == "any") {
+        return createNext(1);
+    }else if(type == "name") {
         string op = *tree["op"], name = *tree["name"];
         if(op == "")
             return constant("")(name);
@@ -133,6 +135,8 @@ Symbol Symbol::matchToSymbol(const AST& tree)
             return matchToSymbol(tree["value"])^1;
         else if(op == "?")
             return matchToSymbol(tree["value"])^-1;
+    } else if(type == "flatten") {
+        return matchToSymbol(tree["value"]).flatten();
     } else if(type == "set") {
         Symbol sum = createSet("");
         AST options = tree["value"];
@@ -142,7 +146,11 @@ Symbol Symbol::matchToSymbol(const AST& tree)
             options = options << tree["last"];
         for(AST::iterator i = options.begin(); i != options.end(); ++i)
             sum = sum | matchToSymbol(*i);
+        if(tree["except"])
+            return !sum & createNext(1);
         return sum;
+    } else if(type == "range") {
+        return createSet((*tree["left"])[0], (*tree["right"])[0]);
     } else if(type == "match") {
         return matchToSymbol(tree["value"]);
     } else if(type == "escape") {
@@ -170,7 +178,7 @@ Symbol Symbol::interpretString(const std::string& input)
             "anum", createMatch("_") | createLookup("alpha")
                     | createLookup("ddigit"),
             "char", constant("char")("type") & createNext(1)("value"),
-            "reserved", createSet("_:|!*+?{}[]()<>\\"),
+            "reserved", createSet("._:|!*+?{}[]()<>\\"),
             "range", constant("range")("type")
                     & ((createSet('a', 'z')("left") & createMatch("-")
                             & createSet('a', 'z')("right"))
@@ -181,11 +189,13 @@ Symbol Symbol::interpretString(const std::string& input)
             "escape", createMatch("\\")
                     & ((constant("cnum")("type") & createLookup("int")("value"))
                         | (constant("escape")("type") & createNext(1)("value"))),
+            "any", create("any")("type") & createMatch("."),
             "match", constant("match")("type")
                     & (createLookup("escape")
                         | (!createLookup("reserved")
                             & createLookup("char")))("value"),
             "set", constant("set")("type") & createMatch("[")
+                    & (createMatch("^")("except")^-1)
                     & (((constant("char")("type")
                         & (createMatch("]")
                             | createMatch("-"))("value"))("first"))^-1)
@@ -196,8 +206,7 @@ Symbol Symbol::interpretString(const std::string& input)
                     & createMatch("]"),
             "rep", constant("rep")("type") & createLookup("atom")("value")
                     & (createMatch("*") | createMatch("+")
-                        | createMatch("?"))("op")
-                    & (createMatch("_")("flatten") ^ -1),
+                        | createMatch("?"))("op"),
             "not", constant("not")("type") & createMatch("!")
                     & createLookup("maybe_not")("value"),
             "name", constant("name")("type") & createMatch("<")
@@ -217,7 +226,8 @@ Symbol Symbol::interpretString(const std::string& input)
             "subexpr", createMatch("(") & createLookup("expr") & createMatch(")"),
             "atom", createLookup("match") | createLookup("set")
                     | createLookup("subexpr") | createLookup("name")
-                    | createLookup("next") | createLookup("lookup"),
+                    | createLookup("next") | createLookup("lookup")
+                    | createLookup("any"),
             "maybe_rep", createLookup("rep") | createLookup("atom"),
             "maybe_not", createLookup("not") | createLookup("maybe_rep"),
             "concat", constant("concat")("type")
@@ -226,8 +236,10 @@ Symbol Symbol::interpretString(const std::string& input)
             "append", constant("append")("type") & createLookup("concat")("value")
                     & createMatch(":") & createLookup("maybe_append")("tail"),
             "maybe_append", createLookup("append") | createLookup("concat"),
-            "ordered", constant("ordered")("type") & (createLookup("maybe_append")  >>
-                    ((createMatch("|") & (createLookup("maybe_append")))^0))("value"),
+            "flatten", constant("flatten")("type") & createLookup("append")("value") & createMatch("_"),
+            "maybe_flatten", createLookup("flatten") | createLookup("maybe_append"),
+            "ordered", constant("ordered")("type") & (createLookup("maybe_flatten")  >>
+                    ((createMatch("|") & (createLookup("maybe_flatten")))^0))("value"),
             "expr", constant("expr")("type") & createLookup("ordered")("value"),
             "input", (createLookup("expr") | constant("none")("type"))
                     & !createNext(1)
@@ -481,6 +493,8 @@ ostream& Symbol::print(ostream& out, std::string tab) const
         return left_->print(out << "not : " << endl, tab);
     case CONSTANT:
         return out << "constant : " << *match_ << endl;
+	case FLATTEN:
+		return left_->print(out << "flatten : " << endl, tab);
     default:
         return out << "!!!" << endl;
     }
