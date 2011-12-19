@@ -24,7 +24,7 @@ CPP_FILES	= $(FILES:%=%.cpp)
 DEPENDS		= $(NAMES:%=$(DEP_DIR)/%.d)
 OBJ_FILES	= $(NAMES:%=$(OBJ_DIR)/%.o)
 
-TARGET		= $(TARGET_DIR)/main
+TARGET		= $(TARGET_DIR)/pc
 
 LOOKUP		= $(filter %$(1).cpp, $(CPP_FILES))
 
