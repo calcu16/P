@@ -1,0 +1,287 @@
+#!/usr/bin/env python
+# created Andrew Carter 7/14/2010
+# modified by Andrew Carter 12/19/2011
+import glob
+import optparse
+import os
+import re
+import shutil
+import sys
+# a regular expression containg text characters
+text_re = \
+    re.compile("^[a-zA-Z0-9`~!@#$%^&*()_+={}| ;:\"',<>./?\t\r\n[\]{}|\\-]*$")
+# possible warnings and fixes
+optlist = {
+    "warn" : ["tabs","endings","last-line","binary","length"],
+    "fix" :  ["tabs", "endings", "last-line"]
+}
+fix_choices = \
+    str(optlist["fix"]).replace('[','').replace(']','').replace("'",'')
+warn_choices = \
+    str(optlist["warn"]).replace('[','').replace(']','').replace("'",'')
+# whether warnings/fixes are enabled
+checklist = {"warn":{},"fix":{}}
+for w in optlist["warn"]:
+    checklist["warn"][w] = True
+for f in optlist["fix"]:
+    checklist["fix"][f] = False
+# Method to set the warning values
+def setFlag(option, opt, cmd, parser, flag, name, value):
+    if name == "all":
+        for f in optlist[flag]:
+            checklist[flag][f] = value
+    else:
+        checklist[flag][name] = value
+#Various line endings
+lineEndings = ['\r\n','\r','\n','']
+lineEndingError = { "\r"    : "File uses CR line endings",
+                    "\n"    : "File uses LF line endings",
+                    "\r\n"  : "File uses CR+LF line endings",
+                    "x"     : "File uses inconsistent line endings"}
+optLineEndings = ["Mac","PC","Unix","native","none"]
+#A mapping from option choice to actual line ending
+toLineEnding = {"Mac" : "\r","Unix" : "\n","PC" : "\r\n",
+                "\r" : "\r","\n" : "\n", "\r\n" : "\r\n",
+                "native" : os.linesep,"none" : ""}
+
+# Standard option parsing
+parser = optparse.OptionParser(usage="usage: %prog [options] [files] ...")
+
+
+# -q, --quiet could be added in the future
+parser.add_option("-v","--verbose",
+        dest="output",
+        action="store_const",
+        const="verbose",
+        help="Prints standard error information about each file [default]",
+        default="verbose")
+parser.add_option("-i","--info",
+        dest="output",
+        action="store_const",
+        const="info",
+        help="Prints out all information about each file")
+
+parser.add_option("-o","--overwrite",
+        dest="rename",
+        action="store_false",
+        help="Overwrites the original file when fixing")
+parser.add_option("-r","--rename",
+        dest="rename",
+        action="store_true",
+        help="Renames the file and then creates a new fixed file [default]",
+        default=True)
+parser.add_option("-R", "--recursive",
+        dest="recursive",
+        action="store_true",
+        help="Recursively linechecks all files in the directory")
+
+default_values = optparse.OptionGroup(parser, "Linecheck Values",
+    "Change the values that linecheck uses when checking files.")
+default_values.add_option("-e","--endings",
+        dest="endings",
+        help="line endings [default: %default]",
+        type="choice",
+        choices=optLineEndings,
+        default="native")
+default_values.add_option("-l","--length",
+        dest="length",
+        help="minimum length of lines to report [default: %default]",
+        type="int",
+        default=80)
+default_values.add_option("-t","--tabs",
+        dest="tabs",
+        help="sets expanding tab length [default: %default]",
+        type="int",
+        default=8)
+default_values.add_option("-x","--expand-tabs",
+        dest="expand",
+        action="store_true",
+        help="Expand tabs [default]",
+        default=True)
+default_values.add_option("-X","--do-not-expand-tabs",
+        dest="expand",
+        action="store_false",
+        help="Do not expand tabs")
+parser.add_option_group(default_values)
+
+
+
+
+fix_options = optparse.OptionGroup(parser, "Fix Options",
+                            "Linecheck can fix these things")
+fix_options.add_option("--fix-all",
+        action="callback",
+        callback=setFlag,
+        callback_args=("fix","all",True),
+        help="Fixes everything : " + fix_choices)
+fix_options.add_option("--fix-tabs",
+        action="callback",
+        callback=setFlag,
+        callback_args=("fix","tabs",True),
+        help="Fix tabs")
+fix_options.add_option("--fix-endings",
+        action="callback",
+        callback=setFlag,
+        callback_args=("fix","endings",True),
+        help="Fix line endings")
+fix_options.add_option("--fix-last-line",
+        action="callback",
+        callback=setFlag,
+        callback_args=("fix","last-line",True),
+        help="Fix no newline on last line")
+parser.add_option_group(fix_options)
+
+
+ignore_options = optparse.OptionGroup(parser, "Ignoring Options",
+                            "Linecheck can suppress these warnings")
+ignore_options.add_option("--ignore-all",
+        action="callback",
+        callback=setFlag,
+        callback_args=("warn","all",False),
+        help="Ignores everything : " + warn_choices)
+ignore_options.add_option("--ignore-tabs",
+        action="callback",
+        callback=setFlag,
+        callback_args=("warn","tabs",False),
+        help="Ignores tabs")
+ignore_options.add_option("--ignore-length",
+        action="callback",
+        callback=setFlag,
+        callback_args=("warn","length",False),
+        help="Ignores line length")
+ignore_options.add_option("--ignore-endings",
+        action="callback",
+        callback=setFlag,
+        callback_args=("warn","endings",False),
+        help="Ignores line endings")
+ignore_options.add_option("--ignore-last-line",
+        action="callback",
+        callback=setFlag,
+        callback_args=("warn","last-line",False),
+        help="Ignores no newline on last line")
+ignore_options.add_option("--ignore-binary",
+        action="callback",
+        callback=setFlag,
+        callback_args=("warn","binary",False),
+        help="Ignores possible binary files")
+parser.add_option_group(ignore_options)
+
+(options, args) = parser.parse_args()
+if len(args) == 0:
+    parser.print_help()
+    sys.exit()
+
+#iterates over all the files
+filenames = set()
+for arg in args:
+    for filename in glob.iglob(arg):
+        stack = [filename]
+        while stack:
+            currentfile = stack.pop()
+            if os.path.isdir(currentfile) and options.recursive:
+                for subfile in os.listdir(currentfile):
+                    stack.append(os.path.join(currentfile,subfile))
+            else:
+                filenames.add(currentfile)
+for filename in filenames:
+    try:
+        error = {}
+        badLines = 0
+        lineCount = 0
+        charCount = 0
+        binary = False
+        tabs = False
+        fixed = False
+        inFile = open(filename,'r')
+        acceptedEnding = toLineEnding[options.endings]
+        fileEndings = ''
+        lines = []
+        for line in inFile:
+            binary = binary or not text_re.match(line)
+            lineCount += 1
+            if "\t" in line:
+                tabs = True
+                error["tabs"] = \
+                    "File uses TABS (expanding TABS to spaces is safer)"
+                if checklist["fix"]["tabs"]:
+                    fixed = True
+                    line = line.expandtabs(options.tabs)
+                    error["tabs"] += " FIXED"
+            llen = len(line.expandtabs(options.tabs).rstrip('\r\n'))
+            charCount += llen
+            if llen > options.length:
+                error[badLines] = "Line %d is %d character" % (lineCount, llen)
+                if llen != 1:
+                    error[badLines] += "s"
+                error[badLines] += " long (> %d)" % options.length
+                badLines += 1
+            for ending in lineEndings:
+                if ending in line:
+                    if not ending:
+                        error["last-line"] = \
+                            "Last line does not end with a newline"
+                        if checklist["fix"]["last-line"]:
+                            fixed = True
+                            error["last-line"] += " FIXED"
+                            if acceptedEnding:
+                                line += acceptedEnding
+                            elif fileEndings and fileEndings != 'x':
+                                line += fileEndings
+                            else:
+                                line += toLineEnding["native"]
+                    else:
+                        if not fileEndings:
+                            fileEndings = ending
+                        elif fileEndings != ending:
+                            fileEndings = 'x'
+                        if ending != acceptedEnding \
+                                and checklist["fix"]["endings"]:
+                            fixed = True
+                            error["endings"] = " FIXED"
+                            line = line.rstrip('\r\n') + acceptedEnding
+                        break
+            lines[len(lines):] = line
+        if acceptedEnding and acceptedEnding != fileEndings:
+            error["endings"] = lineEndingError[fileEndings] \
+                                + error.get("endings","")
+        inFile.close()
+        if binary and "binary" in error:
+            print "WARNING! %s appears to be a binary file, skipping" \
+                    % filename
+        else:
+            output = []
+            for warning in ["binary","last-line","endings","tabs"]:
+                if checklist["warn"][warning] and warning in error:
+                    output.append(error[warning])
+            if checklist["warn"]["length"]:
+                for i in range(0,badLines):
+                    output.append(error[i])
+            if options.output == "info":
+                info = "  - Has " + lines + " line"
+                if lines != 1:
+                    info += "s"
+                info += " and " + chars + "character"
+                if chars != 1:
+                    char += "s"
+                output.append(info)
+            if output:
+                print filename, ":"
+            for out in output:
+                print "\t", out
+            if fixed:
+                try:
+                    if options.rename:
+                        os.rename(filename, filename+".bad")
+                    try:
+                        outFile = open(filename, 'wb')
+                        for line in lines:
+                            outFile.write(line)
+                    except IOError:
+                        print 'Error writing to file %s' % filename
+                    if options.rename:
+                        shutil.copystat(filename+".bad",filename)
+                except OSError:
+                    print 'ERROR! %s.bad already exists,' + \
+                            'delete it or move it out of the way' % filename
+    except OSError:
+        print 'Error reading file ' + filename
