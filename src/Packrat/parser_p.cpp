@@ -1,32 +1,53 @@
-Parser::PParser = NULL;
-static const Parser& Parser::getPParser()
+#include "parser.hpp"
+using namespace std;
+using namespace packrat;
+static Parser* PParser = NULL;
+const Parser& Parser::getPParser()
 {
-	if(PParser == NULL)
-		PParser = new Parser(
-			"LBRACK", "\\{{sep}",
-			"RBRACK", "\\}{sep}",
-			"SEMICOLON", ";{sep}",
-			"ASSIGN", "={sep}",
-			"RETURN", "return{sep}",
-			"ccomment", "/\\*(!\\*/{1})*\\*/",
-			"space", "[ \t\r\n\v]",
-			"sep", "({comment}|{space})*",
-			"newline", "<type=newline><value:\r\n|\n\r|\n|\r>",
-			"any", "<type=any><value:{1}>",
-			"escape", "<type=escape>\\<value:{newline}|{any}>",
-			"ident", "<type=ident><value:![0-9]([a-zA-Z0-9_]*_)>{sep}",
-			"o_int", "<type=o_int><value:[0-7]+_>",
-			"d_int", "<type=d_int>!0<value:[0-9]+_]",
-			"x_int", "<type=x_int>0[xX]<value:[0-9a-fA-F]+_>",
-			"int_literal", "<type=int_literal><value:{o_int}|{d_int}|{x_int}>{sep}",
-			"char_literal", "<type=char_literal>'<value:{escape}|{any}>'",
-			"constant", "<type=constant><value:{int}|{char}>",
-			"atom", "<type=atom><value:{ident}|{constant}>",
-			"assignment", "{ident}{ASSIGN}{expression}",
-			"expression", "<value=expression><value:{atom}|{assignment}"
-			"ret_statement", "<type=return>RETURN<value:{expression}>",
-			"maybe_dec", 
-			"program", "<type=program><value:(cdec|func)*>",
-		);
-	
+    if(PParser == NULL)
+        PParser = new Parser(
+            /* Lexcical Analysis */
+            /** Seperators **/
+            "COMMENT_START", "/\\*",
+            "COMMENT_END", "\\*/",
+            "COMMENT", "{COMMENT_START}(!{COMMENT_END}.)*_{COMMENT_END}",
+            "SPACE", "[ \t\r\n\v]",
+            "SEP", "({COMMENT}|{SPACE})*_",
+            /** Operators **/
+            "ADD_OP", "<type=add_op><value:[-+]>{SEP}",
+            "MUL_OP", "<type=mul_op><value:[*/%]>{SEP}",
+            "ASSIGN_OP", "[-+*/%]?=",
+            /** Keywords **/
+            "IF", "if![a-zA-Z_]{SEP}",
+            "ELSE", "else![a-zA-Z_]{SEP}",
+            "RETURN", "return![a-zA-Z_]{SEP}",
+            "VOID", "void![a-zA-Z_]{SEP}",
+            "KEYWORD", "{IF}|{ELSE}|{RETURN}|{VOID}",
+            /** Symbols **/
+            "LBRACK", "\\{{SEP}",
+            "RBRACK", "\\}{SEP}",
+            "LPAREN", "\\({SEP}",
+            "RPAREN", "\\){SEP}",
+            "SEMICOLON", ";{SEP}",
+            "ASSIGN", "={SEP}",
+            /** Values **/
+            "IDENT", "<type=ident>!({KEYWORD}|[0-9])<value:[a-zA-Z0-9]+_>{SEP}",
+            "INT", "<type=int><value:(0[xX][0-9a-fA-F]+_|[0-7]+_|!0[0-9]+_)>{SEP}",
+            "CONSTANT", "{INT}",
+            /* Parser */
+            "atom", "{IDENT}|{CONSTANT}|{LPAREN}{expr}{RPAREN}",
+            "sum", "<type=sum><value:{atom}:(<op:{ADD_OP}>{atom})*>",
+            "assign", "<type=assign><value:{sum}:(<op:{ASSIGN}><rhs:{sum}>)*>",
+            "expr", "<type=expr><value:{assign}:(,{assign})*>",
+            "typename", "<type=typename>(<name:{IDENT}>|{VOID}<name:void>)",
+            "var_dec", "<type=var_dec><var_type:{typename}><value:{expr}>",
+            "return", "<type=return>{RETURN}<value:{expr}>",
+            "statement", "{var_dec}{SEMICOLON}|{return}{SEMICOLON}|{expr}{SEMICOLON}|{select}|{compound}",
+            "compound", "<type=compound>{LBRACK}<value:{statement}*>{RBRACK}",
+            "select", "<type=if>{IF}LPAREN<cond:{expr}>{RPAREN}<if:{statement}>({ELSE}<else:{statement}>)?",
+            "args", "{LPAREN}<arglist:(<typename:{typename}><argname:{IDENT}>?):(<typename:{typename}><argname:{IDENT}>?)*>?{RPAREN}",
+            "function", "<return_type:{typename}><fname:{IDENT}><arg:{args}>(<type=function><value:{compound}>|<type=fdec>{SEMICOLON})",
+            "program", "<type=program>{SEP}<value:{function}*>!"
+        );
+    return *PParser;
 }

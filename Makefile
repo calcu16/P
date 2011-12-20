@@ -47,6 +47,9 @@ $(TARGET): $(OBJ_FILES) | $(TARGET_DIR)
 	$(CXX) $(CXX_FLAGS) -o $(TARGET) $(OBJ_FILES) 2>&1 | \
 	$(FILT) $(FILT_FLAGS)
 
+linecheck:
+	bin/linecheck -R --fix-endings --fix-last-line src
+
 -include $(DEPENDS)
 	
 $(OBJ_DIR)/%.o: | $(OBJ_DIR)

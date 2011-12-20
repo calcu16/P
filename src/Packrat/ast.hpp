@@ -1,7 +1,6 @@
 #ifndef PACKRAT_AST_HPP
 #define PACKRAT_AST_HPP
 #include "../Wrapper/iterator.hpp"
-#include "../Wrapper/constiterator.hpp"
 #include <iostream>
 #include <string>
 #include <unordered_map>

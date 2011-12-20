@@ -15,9 +15,6 @@ namespace packrat
     private:
         std::unordered_map<std::string, size_t> lookup_;
         std::vector<Symbol*> symbols_;
-        
-        Parser* documentParser;
-        static const Parser& getDocumentParser();
     public:
         Parser();
         Parser(const Parser&);
@@ -42,6 +39,7 @@ namespace packrat
         
         AST lookup(const std::string&, const std::string&, size_t, AST**) const;
         AST parse(const std::string&, const std::string&) const;
+        static const Parser& getPParser();
     };
 }
 #include "parser_private.hpp"

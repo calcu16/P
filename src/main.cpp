@@ -8,7 +8,6 @@ using namespace packrat;
 int main(void)
 {
     cout << "Hello World!" << endl;
-    Symbol u("a[]bc-]!|d\\45!{a}{3}<args:({arg}:(,{arg})*)>|<what=hello>");
-    cout << u << endl;
+    cout << Parser::getPParser().parse("program", "/* Boring program */int main() { int a; return 0;}") << endl;
     return 0;
 }

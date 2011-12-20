@@ -7,8 +7,6 @@
 using namespace std;
 using namespace packrat;
 
-const Parser* Parser::PParser = NULL;
-
 Parser::Parser()
 {
 }
@@ -96,3 +94,5 @@ AST Parser::parse(const std::string& name, const std::string& input) const
     delete[] table;
     return ret;
 }
+
+#include "parser_p.cpp"

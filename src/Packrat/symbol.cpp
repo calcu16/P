@@ -189,7 +189,7 @@ Symbol Symbol::interpretString(const std::string& input)
             "escape", createMatch("\\")
                     & ((constant("cnum")("type") & createLookup("int")("value"))
                         | (constant("escape")("type") & createNext(1)("value"))),
-            "any", create("any")("type") & createMatch("."),
+            "any", constant("any")("type") & createMatch("."),
             "match", constant("match")("type")
                     & (createLookup("escape")
                         | (!createLookup("reserved")
@@ -230,16 +230,16 @@ Symbol Symbol::interpretString(const std::string& input)
                     | createLookup("any"),
             "maybe_rep", createLookup("rep") | createLookup("atom"),
             "maybe_not", createLookup("not") | createLookup("maybe_rep"),
-            "concat", constant("concat")("type")
-                    & (createLookup("maybe_not")^0)("value")
-                    & (createMatch("!")("eof")^-1),
-            "append", constant("append")("type") & createLookup("concat")("value")
+            "append", constant("append")("type") & createLookup("maybe_not")("value")
                     & createMatch(":") & createLookup("maybe_append")("tail"),
-            "maybe_append", createLookup("append") | createLookup("concat"),
-            "flatten", constant("flatten")("type") & createLookup("append")("value") & createMatch("_"),
+            "maybe_append", createLookup("append") | createLookup("maybe_not"),
+            "flatten", constant("flatten")("type") & createLookup("maybe_append")("value") & createMatch("_"),
             "maybe_flatten", createLookup("flatten") | createLookup("maybe_append"),
-            "ordered", constant("ordered")("type") & (createLookup("maybe_flatten")  >>
-                    ((createMatch("|") & (createLookup("maybe_flatten")))^0))("value"),
+            "concat", constant("concat")("type")
+                    & (createLookup("maybe_flatten")^0)("value")
+                    & (createMatch("!")("eof")^-1),
+            "ordered", constant("ordered")("type") & (createLookup("concat")  >>
+                    ((createMatch("|") & (createLookup("concat")))^0))("value"),
             "expr", constant("expr")("type") & createLookup("ordered")("value"),
             "input", (createLookup("expr") | constant("none")("type"))
                     & !createNext(1)
