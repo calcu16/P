@@ -42,7 +42,7 @@ AST::AST(const AST& left, const AST& right)
         assoc_.insert(pair<string,AST*>(i->first,copyp(i->second)));
     for(unordered_map<string,AST*>::iterator i = rl.assoc_.begin(); i != rl.assoc_.end(); ++i)
         assoc_.insert(pair<string,AST*>(i->first,copyp(i->second)));
-    if(left.value_ && right.value_)
+    if(fl.value_ && rl.value_)
         value_ = new string(*fl + *rl);
 }
 

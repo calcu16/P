@@ -71,8 +71,8 @@ namespace packrat
         int startc() const;
         int endc() const;
 
-        typedef wrapper::ConstIterator<numbered_t,AST> ConstIterator;
-        typedef wrapper::Iterator<numbered_t,AST> Iterator;
+        typedef wrapper::Iterator<numbered_t::const_iterator,const AST> ConstIterator;
+        typedef wrapper::Iterator<numbered_t::iterator,AST> Iterator;
         
         typedef ConstIterator const_iterator;
         typedef Iterator iterator;

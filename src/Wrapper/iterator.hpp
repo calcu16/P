@@ -2,18 +2,21 @@
 #define WRAPPER_ITERATOR_HPP
 namespace wrapper
 {
-    template<typename S, typename P>
+    template<typename I, typename P>
     class Iterator
     {
     private:
-        typename S::iterator iterator_;
+        I iterator_;
     public:
-        Iterator(const typename S::iterator&);
-        Iterator<S,P>& operator++();
+        Iterator(const I&);
+        Iterator<I,P>& operator++();
+        Iterator<I,P> operator++(int);
+        Iterator<I,P>& operator--();
+        Iterator<I,P> operator--(int);
         P& operator*() const;
         P* operator->() const;
-        bool operator==(const Iterator<S,P>&) const;
-        bool operator!=(const Iterator<S,P>&) const;
+        bool operator==(const Iterator<I,P>&) const;
+        bool operator!=(const Iterator<I,P>&) const;
     };
 }
 #include "iterator_private.hpp"
