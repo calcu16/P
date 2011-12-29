@@ -9,7 +9,7 @@ import shutil
 import sys
 # a regular expression containg text characters
 text_re = \
-    re.compile("^[a-zA-Z0-9`~!@#$%^&*()_+={}| ;:\"',<>./?\t\r\n[\]{}|\\-]*$")
+   re.compile("^[a-zA-Z0-9`~!@#$%^&*()_+={}| ;:\"',<>./?\t\r\n[\\]{}|\\\\-]*$")
 # possible warnings and fixes
 optlist = {
     "warn" : ["tabs","endings","last-line","binary","length"],
@@ -169,18 +169,22 @@ parser.add_option_group(ignore_options)
 (options, args) = parser.parse_args()
 if len(args) == 0:
     parser.print_help()
-    sys.exit()
+    sys.exit(0)
 
 #iterates over all the files
+status = 0
 filenames = set()
 for arg in args:
     for filename in glob.iglob(arg):
         stack = [filename]
         while stack:
             currentfile = stack.pop()
-            if os.path.isdir(currentfile) and options.recursive:
-                for subfile in os.listdir(currentfile):
-                    stack.append(os.path.join(currentfile,subfile))
+            if os.path.isdir(currentfile):
+                if options.recursive:
+                    for subfile in os.listdir(currentfile):
+                        stack.append(os.path.join(currentfile,subfile))
+                else:
+                    print "%s is a directory, skipping" % currentfile
             else:
                 filenames.add(currentfile)
 for filename in filenames:
@@ -197,7 +201,9 @@ for filename in filenames:
         fileEndings = ''
         lines = []
         for line in inFile:
-            binary = binary or not text_re.match(line)
+            if not text_re.match(line):
+                binary = True
+                break
             lineCount += 1
             if "\t" in line:
                 tabs = True
@@ -207,6 +213,8 @@ for filename in filenames:
                     fixed = True
                     line = line.expandtabs(options.tabs)
                     error["tabs"] += " FIXED"
+                else:
+                    status = 1
             llen = len(line.expandtabs(options.tabs).rstrip('\r\n'))
             charCount += llen
             if llen > options.length:
@@ -215,6 +223,7 @@ for filename in filenames:
                     error[badLines] += "s"
                 error[badLines] += " long (> %d)" % options.length
                 badLines += 1
+                status = 0
             for ending in lineEndings:
                 if ending in line:
                     if not ending:
@@ -229,6 +238,8 @@ for filename in filenames:
                                 line += fileEndings
                             else:
                                 line += toLineEnding["native"]
+                        else:
+                            status = 0
                     else:
                         if not fileEndings:
                             fileEndings = ending
@@ -241,14 +252,16 @@ for filename in filenames:
                             line = line.rstrip('\r\n') + acceptedEnding
                         break
             lines[len(lines):] = line
-        if acceptedEnding and acceptedEnding != fileEndings:
-            error["endings"] = lineEndingError[fileEndings] \
-                                + error.get("endings","")
         inFile.close()
-        if binary and "binary" in error:
+        if binary:
             print "WARNING! %s appears to be a binary file, skipping" \
                     % filename
         else:
+            if acceptedEnding and acceptedEnding != fileEndings:
+                error["endings"] = lineEndingError[fileEndings] \
+                                    + error.get("endings","")
+                if not checklist["fix"]["endings"]:
+                    status = 1
             output = []
             for warning in ["binary","last-line","endings","tabs"]:
                 if checklist["warn"][warning] and warning in error:
