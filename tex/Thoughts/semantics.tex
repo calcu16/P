@@ -1,0 +1,25 @@
+\section{Array Indexing}
+It would be nice if \textbf{a[i]} is equivalent to \textbf{\*(a+i)}. Furthermore this should return a refernce and so any assignment into a dereferenced 
+pointer should update the pointer.
+\begin{verbatim}
+  int *a;
+  *a = 5;
+\end{verbatim}
+should result in a pointer which points to the value $5$.
+\section{Pointer Assignment}
+Pointer assignment is dones as appears to the programmer as a deep copy. In addition if the memory was allocated as a block, the whole block is copied in addition to the 
+index into that block. For example the following block of code,
+\begin{verbatim}
+  int a[10], *b, *c, i;
+  for(i = 0; i < 10; i++)
+    a[i] = 0;
+  b = a;
+  b += 5;
+  b[0] = 1;
+  c = b;
+  c -= 5;
+  c[0] = 2;  
+\end{verbatim}
+should end with 3 arrays, \textbf{a} with offsets in the range $\left[0,9\right]$ and all values $0$, \textbf{b} with offsets $\left[-5,4\right]$ all $0$ except offset 
+$0$ which is $1$, and \textbf{c} with offsets in the range $\left[0,9\right]$ and all values $0$ except offset $0$ is $2$ and $5$ is $1$.
+\section{Pointers as Arguments to Functions}

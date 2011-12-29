@@ -1,0 +1,31 @@
+\section{Purpose}
+This document is designed to detail possible semantic evaluation of a P Program, possible optimizations that the compiler can do, as well as various philosphies or 
+beliefs that support these.
+\section{Basic Philosophy}
+Code optimization and readability are currently a tradeoff against each other. It seems unreasonable that this should always be the case, it seems the clearer one can 
+express what one is doing to other people, the clearer one can express to a computer what needs to be done. The first problem is that in C, C++, Java etc. we are not 
+really expressing what needs to be done, but rather what the computer should be doing. Computers now are complex beasts with levels of caches, increasing number of cores, 
+and predictors. Optimizing for them is going to lead to a complex set of instrutions, so it makes sense that the code is going to get gnarly. Humans aren't very good at 
+it either, there are obviou optimizations, but getting stuff to fit properly in cache is trial and error, even if we can't give a computer enough information to make it 
+faster surely we can teach it trial and error.
+
+Functional programming languages does treat a program more as a description of what needs to be done. It still has heiarchy, and gives a way to compute the data, but its 
+a little bit more flexible, its easier to reorder things, results from one function call do not interfere with other indpenendent function calls (mostly). Obviously a 
+first stab at functional languages, unless heavily specialized (i.e. APL) are going to be slower. There is overhead in converting between a functional program and the 
+assembly code that a computer requires. In addition programmers often find writing in these languages unintuitive, which admitedly may be because they were brought up 
+learning languages like C,C++, and Java.
+
+The big semantic difference (the syntax is obviously different, so its a bit of a leap) is the concept of aliasing. A Let block is very similar to an assignment 
+statement, but barring impurities (setf) there is effectively a deep copy, or no aliasing, admittedly Haskell which prides itself more on its purity may have been a 
+better example but hopefully the point is made. So what if there was a programming language that looked like C but acted like a functional programming language? Obviously 
+there are some differences, global variables, sometime functions take in arguments for the purpose of replacing them, prevalance of arrays in C, existense of lists/tuples 
+in Lisp, etc. so it is not a straight forward conversion. This is what P is supposed to be. I'm hoping that the language can be designed such that a lowlevel C program 
+can be programmed in good style in C act the same as the same code (I'll allow slight modification) in P, and get the P compiler to recognize that it should be the same 
+as the lowlevel C program. I happen to prefer soccer to basketball (goals are reached less often in soccer).
+\section{Approach}
+The approach to creating P is as follows. First identify the problems with the conversion, write sample code and explain semantics for possible solutions to show the 
+strengths or weaknesses of various interpretations. Come up with some consensus, document it and begin writing the compiler of a subset of P that shows the behavior, 
+revise consensus if necessary. Once we have a working compiler we can begin working in two different directions, extending the compiler and begin optimizing the output. 
+It will be important to keep track of what we want to be doing, and what the compiler is currently doing, and who is currently working on making those two closer to each 
+other. Documenting additions will be just as important as adding them.
+
