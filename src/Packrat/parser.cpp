@@ -66,7 +66,8 @@ Parser& Parser::add(const std::string& name, const std::string& value)
     return add(name, Symbol(value));
 }
 
-AST Parser::lookup(const std::string& name, const std::string& input, size_t index, AST** table) const
+AST Parser::lookup(const std::string& name,
+                    const std::string& input, size_t index, AST** table) const
 {
     size_t i;
     if(lookup_.find(name) == lookup_.end())

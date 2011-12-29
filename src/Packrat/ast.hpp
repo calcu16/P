@@ -11,16 +11,22 @@ namespace packrat
     class AST
     {
     private:
+typedef std::vector<AST*> numbered_t;
+    public:
+typedef wrapper::Iterator<numbered_t::const_iterator,const AST> ConstIterator;
+typedef wrapper::Iterator<numbered_t::iterator,AST> Iterator;
+
+typedef ConstIterator const_iterator;
+typedef Iterator iterator;
+    private:
         static const std::string NO_STRING;
         static const AST NO_AST;
         
-        typedef std::vector<AST*> numbered_t;
         std::unordered_map<std::string, AST*> assoc_;
         numbered_t numbered_;
         std::string *value_;
         
         int start_, end_;
-        
     public:
         /* Match of a string */
         explicit AST(int=-1);
@@ -70,11 +76,6 @@ namespace packrat
         int startc() const;
         int endc() const;
 
-        typedef wrapper::Iterator<numbered_t::const_iterator,const AST> ConstIterator;
-        typedef wrapper::Iterator<numbered_t::iterator,AST> Iterator;
-        
-        typedef ConstIterator const_iterator;
-        typedef Iterator iterator;
         
         
         ConstIterator begin() const;

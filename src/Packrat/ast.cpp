@@ -38,16 +38,19 @@ AST::AST(const AST& left, const AST& right)
     : value_(NULL), start_(left.start_), end_(right.end_)
 {
     AST fl = left.flatten(), rl = right.flatten();
-    for(unordered_map<string,AST*>::iterator i = fl.assoc_.begin(); i != fl.assoc_.end(); ++i)
+    for(unordered_map<string,AST*>::iterator i = fl.assoc_.begin();
+                i != fl.assoc_.end(); ++i)
         assoc_.insert(pair<string,AST*>(i->first,copyp(i->second)));
-    for(unordered_map<string,AST*>::iterator i = rl.assoc_.begin(); i != rl.assoc_.end(); ++i)
+    for(unordered_map<string,AST*>::iterator i = rl.assoc_.begin();
+                i != rl.assoc_.end(); ++i)
         assoc_.insert(pair<string,AST*>(i->first,copyp(i->second)));
     if(fl.value_ && rl.value_)
         value_ = new string(*fl + *rl);
 }
 
 AST::AST(const string& name, const AST& other)
-    : assoc_(NULL), numbered_(NULL), value_(NULL), start_(other.start_), end_(other.end_)
+    : assoc_(NULL), numbered_(NULL), value_(NULL),
+        start_(other.start_), end_(other.end_)
 {
     (*this)[name] = other;
 }
@@ -55,7 +58,8 @@ AST::AST(const string& name, const AST& other)
 AST::AST(const AST& copy)
     : value_(copyp(copy.value_)), start_(copy.start_), end_(copy.end_)
 {
-    for(unordered_map<string, AST*>::const_iterator i = copy.assoc_.begin(); i != copy.assoc_.end(); ++i)
+    for(unordered_map<string, AST*>::const_iterator i = copy.assoc_.begin();
+            i != copy.assoc_.end(); ++i)
         assoc_.insert(pair<string,AST*>(i->first,copyp(i->second)));
     for(AST::const_iterator i = copy.begin(); i != copy.end(); ++i)
         numbered_.push_back(new AST(*i));
@@ -63,7 +67,8 @@ AST::AST(const AST& copy)
 
 AST::~AST()
 {
-    for(unordered_map<string, AST*>::iterator i = assoc_.begin(); i != assoc_.end(); ++i)
+    for(unordered_map<string, AST*>::iterator i = assoc_.begin();
+            i != assoc_.end(); ++i)
         delete i->second;
     for(numbered_t::iterator i = numbered_.begin(); i != numbered_.end(); ++i)
         delete *i;
@@ -204,7 +209,9 @@ AST& AST::operator[](const std::string& key)
 
 const AST& AST::operator[](const std::string& key) const
 {
-    return assoc_.find(key) == assoc_.end() ? NO_AST : *assoc_.find(key)->second;
+    return assoc_.find(key) == assoc_.end()
+            ? NO_AST
+            : *assoc_.find(key)->second;
 }
 
 AST& AST::operator[](const char* key)
@@ -247,13 +254,16 @@ AST::Iterator AST::end()
 ostream& AST::print(ostream& out, string tab) const
 {
     string ntab = tab + "\t";
-    size_t i = 0;
     if(size())
-        for(unordered_map<string, AST*>::const_iterator j = assoc_.begin(); j != assoc_.end(); ++j)
+        for(unordered_map<string, AST*>::const_iterator j = assoc_.begin();
+                    j != assoc_.end(); ++j)
             j->second->print(out << tab << j->first << endl, ntab);
     else if(length())
+    {
+        size_t i = 0;
         for(AST::const_iterator j = begin(); j != end(); ++j, ++i)
             j->print(out << tab << i << endl, ntab);
+    }
     else if(value_ != NULL)
         out << tab << ": \"" << *value_ << '"' << endl;
     return out;
@@ -261,7 +271,8 @@ ostream& AST::print(ostream& out, string tab) const
 
 ostream& AST::print(ostream& out) const
 {
-    return print(out << endl << "<AST " << start_ << " - " << end_ << endl, "") << ">" << endl;
+    return print(out << endl << "<AST " << start_ << " - " << end_ << endl, "")
+                << ">" << endl;
 }
 
 void swap(AST& left, AST& right) { left.swap(right); }
