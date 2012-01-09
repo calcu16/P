@@ -1,0 +1,23 @@
+\section{Shallow Copying}
+Instead of always doing deep copies each time an array is modified, we only need to do shallow copies and reference count for the same effect.
+\subsection{Exclusive update}
+If there is only one reference to a value, and that value is being updated via that reference, then a shallow copy is not necessary because the original would be automatically garbage collected.
+    Therefore the update can be done in place.
+\subsection{Repeated array update}
+With shallow copying, if an array is being update within a section of code repeatedly, there will only be one instance of the array after the first copy.
+    Therefore it is safe to the latter array updates without checking to see if the reference is exclusive.
+
+\section{Aliased Function Arguments}
+Assuming the write through\/back function calling : 
+
+Currently function arguments can still be midly aliased.
+    This is because the result writes back to the original data.
+    However we can do static analysis, and determine that if a given set of arguments are aliased, for all function calls beneath it, what arguments are aliased.
+    Thus starting at main, we can simplify many functions whose arguments are not aliased, and generate seperate code for them.
+
+\subsection{Write-Only Function Arguments}
+Some arguments are only going to be written to.
+    Several optimizations can be made with respect to aliasing.
+    First if variables that are not read from are aliased, then we can ignore those aliasing.
+    If a write-only argument is aliased with a read or read/write argument we do not have to generate an extra copy of the write only argument as that will never be read from.
+
