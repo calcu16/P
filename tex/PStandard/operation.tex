@@ -1,0 +1,92 @@
+\section{Integer Operations}
+\subsection{Binary Operations}
+\subsubsection{Addition}
+\begin{itemize}
+\item[Syntax] $i + j$
+\item[Result] The result is an integer value that is the integer sum of $i$ and $j$ modular the size of the larger integer.
+\end{itemize}
+\subsubsection{Subtraction}
+\begin{itemize}
+\item[Syntax] $i - j$
+\item[Result] The result is an integer value that is the integer difference of $i$ and $j$ modular the size of the larger integer.
+\end{itemize}
+\subsubsection{Multiplication}
+\begin{itemize}
+\item[Syntax] $i * j$
+\item[Result] The result is an integer value that is the integer difference of $i$ and $j$ modular the size of the larger integer.
+\end{itemize}
+\subsubsection{Division}
+\begin{itemize}
+\item[Syntax] $i / j$
+\item[Result] The result is an integer value that is the integer result of $i / j$ rounded towards negative infinity.
+\end{itemize}
+\subsubsection{Modular Arithemtic}
+\begin{itemize}
+\item[Syntax] $i % j$
+\item[Result] The result is an integer value that is the remainder of $i$ divided by $j$.
+\end{itemize}
+\section{Pointer Operations}
+\subsection{Prefix Operation}
+\subsubsection{Referencing}
+\begin{itemize}
+\item[Syntax] $\&v$
+\item[Result] If $v$ is an element, the result is whatever $v$ is an element of, otherwise it returns a reference to $v$.
+\end{itemize}
+\subsubsection{Dereferencing}
+\begin{itemize}
+\item[Syntax] $\*v$
+\item[Result] If $v$ is an reference, the result is whatever $v$ is a reference of, otherwise it returns the first element of $v$.
+\end{itemize}
+\subsection{Binary Operation}
+\subsubsection{Positive Reindexing}
+\begin{itemize}
+\item[Syntax] $p + i$ or $i + p$, where $a$ is a pointer and $i$ is an integer.
+\item[Result] The pointer offset into the array is changed by the amount of the integer, the result is the same type as the pointer.
+\end{itemize}
+\subsubsection{Negative Reindexing}
+\begin{itemize}
+\item[Syntax] $p - i$ where $p$ is a pointer and $i$ is an integer.
+\item[Reduction] Equivalent to $p + -i$.
+\end{itemize}
+\subsubsection{Pointer Subtraction}
+\begin{itemize}
+\item[Syntax] $p - q$ where $p$ and $q$ are pointers of the equivalent types.
+\item[Result] The result is an integer value the is the difference of the offsets of the intial array.
+\end{itemize}
+\subsection{Lookup}
+\begin{itemize}
+\item[Syntax] $a[i]$ or $i[a]$ where $a$ is a pointer and $i$ is an integer.
+\item[Reduction] Equivalent to $*\left(a + i\right)$.
+\end{itemize}
+\section{Assignment}
+\subsection{Ordinary Assignment}
+\begin{itemize}
+\item[Syntax] $lhs = rhs$, where $lhs$ is a variable or a variable-element.
+\item[Effect] The $lhs$ is modified with the value of the $rhs$. If the $lhs$ references any return values those are updated as well.
+\item[Result] The result is the updated $lhs$.
+\end{itemize}
+\subsection{Operation Assignment}
+\begin{itemize}
+\item[Syntax] $lhs \circ= rhs$, where $\circ$ is a binary operation and $lhs$ is a variable or a variable-element.
+\item[Reduction] Equivalent to $lhs = lhs \circ rhs$.
+\end{itemize}
+\section{Function}
+\subsection{Definition}
+\begin{itemize}
+\item[Syntax] $r n(t_1 p_1, ..., t_n p_n) { s_1 ... s_n }$
+\item[Effect] Creates a function that takes the parameters $p_1$ through $p_n$ of types $t_1$ through $t_n$ respectively. This function, when called by its name $n$ and passed into it args $a_1$ through $a_n$ executes statements $s_1$ through $s_n$ including control flow, and ultimately returns a value of type $r$.
+\end{itemize}
+\subsection{Call}
+\begin{itemize}
+\item[Syntax] $n(a_1, ..., a_n)$
+\item[Effect] Calls the previously declared function named $n$, binding arguments $a_1$ through $a_n$ to $p_1$ through $p_n$, wherenever the value $p_m$ is modified, if $a_m$ is a variable type, then $a_m$ is also modified in the same manner.
+\end{itemize}
+\section{Structs and Unions}
+\subsection{Definition}
+\begin{itemize}
+\item[Syntax] $struct|union n { t_1 e_1} v;
+\end{itemize}
+\subsection{Access}
+\begin{itemize}
+\item[Syntax] $c.e$
+\end{itemize}

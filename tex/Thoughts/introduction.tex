@@ -22,6 +22,10 @@ there are some differences, global variables, sometime functions take in argumen
 in Lisp, etc. so it is not a straight forward conversion. This is what P is supposed to be. I'm hoping that the language can be designed such that a lowlevel C program 
 can be programmed in good style in C act the same as the same code (I'll allow slight modification) in P, and get the P compiler to recognize that it should be the same 
 as the lowlevel C program. I happen to prefer soccer to basketball (goals are reached less often in soccer).
+\section{Premise}
+The P Programming language is a new programming language. It is based on the syntax of C, however with different semantics. The key difference is that pointer assignment 
+operations appear to the programmer as a deep copy. Furthermore pointers passed into functions do no alias with each other from the perspective of the function being 
+called.
 \section{Approach}
 The approach to creating P is as follows. First identify the problems with the conversion, write sample code and explain semantics for possible solutions to show the 
 strengths or weaknesses of various interpretations. Come up with some consensus, document it and begin writing the compiler of a subset of P that shows the behavior, 
