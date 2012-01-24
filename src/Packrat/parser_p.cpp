@@ -14,6 +14,7 @@ const Parser& Parser::getPParser()
             "SPACE",        "[ \t\r\n\v]",
             "SEP",          "({COMMENT}|{SPACE})*_",
             /** Operators **/
+            "UN_OP",        "<type=un_op><value:[-+*&~]>{SEP}",
             "ADD_OP",       "<type=add_op><value:[-+]>{SEP}",
             "MUL_OP",       "<type=mul_op><value:[*/%]>{SEP}",
             "ASSIGN_OP",    "[-+*/%]?=",
@@ -38,6 +39,7 @@ const Parser& Parser::getPParser()
             "CONSTANT",     "{INT}",
             /* Parser */
             "atom",         "{IDENT}|{CONSTANT}|{LPAREN}{expr}{RPAREN}",
+            "unary",        "<type=unary><op:UN_OP><value:{unary}>",
             "sum",          "<type=sum><value:{atom}:(<op:{ADD_OP}>{atom})*>",
             "assign",       "<type=assign><value:{sum}:"
                             "(<op:{ASSIGN}><rhs:{sum}>)*>",
