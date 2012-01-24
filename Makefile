@@ -59,7 +59,7 @@ $(PROGRAM): $(OBJ_FILES) | $(TARGET_DIR)
 -include $(DEPENDS)
 
 $(DOC_DIR)/%.pdf: $(TEX_DIR)/$(*F)/*.tex | $(DOC_DIR)
-	$(TEX) -draftmode $(TEX_FLAGS) $(TEX_DIR)/$(*F).tex >/dev/null 2>/dev/null && \
+	$(TEX) -draftmode $(TEX_FLAGS) $(TEX_DIR)/$(*F).tex >/dev/null 2>/dev/null; \
 	$(TEX) $(TEX_FLAGS) $(TEX_DIR)/$(*F).tex && \
 	mv $(*F).pdf $@ && \
 	rm $(*F).{log,aux}
