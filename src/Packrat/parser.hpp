@@ -42,5 +42,5 @@ namespace packrat
         static const Parser& getPParser();
     };
 }
-#include "parser_private.hpp"
+#include "parser.ipp"
 #endif

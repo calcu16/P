@@ -19,5 +19,5 @@ namespace wrapper
         bool operator!=(const Iterator<I,P>&) const;
     };
 }
-#include "iterator_private.hpp"
+#include "iterator.ipp"
 #endif
