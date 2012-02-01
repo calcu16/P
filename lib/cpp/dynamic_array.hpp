@@ -1,10 +1,9 @@
-template<typename T, typename P>
+template<typename T>
 class DynamicArray
 {
 public:
     enum copy_t { DEEP, ARG };
 private:
-    P *parent_;
     DynamicArray<T> *return_;
     size_t references_, length_;
     T *data_;

@@ -1,13 +1,13 @@
 #ifndef FAT_POINTER_HPP
 #define FAT_POINTER_HPP
-template<typename T, typename P>
+template<typename T>
 class FatPointer
 {
 private:
-    P *parent_;
-    DynamicArray data_;
+    FatPointer<FatPointer<T> > parent_;
+    DynamicArray<T> *data_;
     size_t index_;
 public:
-    
+    FatPoint()
 }
 #endif
