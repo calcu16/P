@@ -68,9 +68,25 @@ For example if an \AST\ represented a list of children of integers that need to 
     }
     \end{verbatim}
 
-If an \AST\ is called, and the \AST\ does not contain that many elements,
+If an \AST\ is indexed into, and the \AST\ does not contain that many elements,
     then the \AST\ is extended if it is not a \code{const AST} with non-matching \AST\,
     and the last one is returned.
     If it is a \code{const AST}, then a non-matching \AST\ is returned.
 
 \subsection{Reading a named array}
+An \AST\ that is a pointer to a named array of children can be accessed via the (\code{[]}) operator,
+    with a \code{string} as the index.
+    For instance, if a \AST\ has a type and a value, with one option for the type being the constant \code{"SUM"},
+    and in which case you want to sum the value, which is a list of numbers, then the following code could be used:
+    \begin{verbatim}
+    int eval(const AST& ast)
+    {
+        if(*ast["type"] == "SUM")
+            return sumAST(ast["value"])
+        ...
+    }
+    \end{verbatim}
+
+If an \AST\ is indexed with a \code{string} that does not refernce any \AST,
+    then if the \AST\ is not a \code{const AST} a new non-matching \AST is created and put in that index.
+    Otherwise a non-matching \AST\ is returned.
