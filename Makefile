@@ -31,11 +31,15 @@ OBJ_FILES	= $(NAMES:%=$(OBJ_DIR)/%.o)
 PROGRAM		= $(TARGET_DIR)/pc
 
 DOC_TARGETS	= $(DOC_FILES:%=$(DOC_DIR)/%.pdf)
-TARGETS		= $(PROGRAM) $(DOC_TARGETS)
+TARGETS		= documents compiler
 
 LOOKUP		= $(filter %$(1).cpp, $(CPP_FILES))
 
 all: $(TARGETS)
+
+documents: $(DOC_TARGETS)
+
+compiler: $(PROGRAM)
 
 clean:
 	-rm -rf $(BUILD_DIR)

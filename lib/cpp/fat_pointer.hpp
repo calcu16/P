@@ -8,6 +8,6 @@ private:
     DynamicArray<T> *data_;
     size_t index_;
 public:
-    FatPoint()
+    FatPointer()
 }
 #endif
