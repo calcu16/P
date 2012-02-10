@@ -4,7 +4,7 @@ template<typename T>
 class FatPointer
 {
 private:
-    FatPointer<FatPointer<T> > parent_;
+    FatPointer<FatPointer<T> > *parent_;
     DynamicArray<T> *data_;
     size_t index_;
 public:
