@@ -5,7 +5,7 @@
  * AC
  */
 
-int func(int* p, int* q)
+int func(int * const p, int * const q)
 {
     *p = 6;
     *q = 7;

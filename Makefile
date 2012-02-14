@@ -62,7 +62,7 @@ $(PROGRAM): $(OBJ_FILES) | $(TARGET_DIR)
 
 -include $(DEPENDS)
 
-$(DOC_DIR)/%.pdf: $(TEX_DIR)/$(*F)/*.tex | $(DOC_DIR)
+$(DOC_DIR)/%.pdf: $(DOC_DIR)
 	$(TEX) -draftmode $(TEX_FLAGS) $(TEX_DIR)/$(*F).tex >/dev/null 2>/dev/null; \
 	$(TEX) $(TEX_FLAGS) $(TEX_DIR)/$(*F).tex && \
 	mv $(*F).pdf $@ && \
@@ -70,3 +70,8 @@ $(DOC_DIR)/%.pdf: $(TEX_DIR)/$(*F)/*.tex | $(DOC_DIR)
 
 $(OBJ_DIR)/%.o: | $(OBJ_DIR)
 	$(CXX) $(CXX_FLAGS) -c -o $@ $(call LOOKUP,$(*F))
+
+# giving up and LaTeX has no mahic
+$(DOC_DIR)/PackratParser.tex : $(TEX_DIR)/PackratParser.tex $(TEX_DIR)/PackratParser/usingAST.tex
+$(DOC_DIR)/PStandard.tex : $(TEX_DIR)/PStandard.tex $(TEX_DIR)/PStandard/operation.tex $(TEX_DIR)/PStandard/scope.tex $(TEX_DIR)/PStandard/terms.tex
+$(DOC_DIR)/Thoughts.tex : $(TEX_DIR)/Thoughts.tex $(TEX_DIR)/Thoughts/introduction.tex $(TEX_DIR)/Thoughts/optimizations.tex $(TEX_DIR)/Thoughts/semantics.tex
