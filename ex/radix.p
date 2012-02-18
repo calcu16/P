@@ -2,16 +2,18 @@
 // http://sourcecode4u.com/sortings/
 //   11-write-a-c-program-to-implement-radix-sort
 
-void radixsort(int const *a, int *out, int const n, int const MAX)
+void radixsort(int * const a, int *out, int const n)
 {
-  int i, b[MAX], m = 0, exp = 1;
+  int i, *b, m = 0, exp = 1;
 
-  // Find maximum value while creating the new table
+  // Find maximum value while creating the new table  
+  out = a;
+  b = a;
+
   for (i = 0; i < n; i++)
   {
     if (a[i] > m)
       m = a[i];
-    out[i] = a[i];
   }
 
   // For each digit
@@ -33,7 +35,7 @@ void radixsort(int const *a, int *out, int const n, int const MAX)
 
     // Populate new array with next digit sorted
     for (i = n - 1; i >= 0; i--)
-      b[--bucket[out[i] / exp % 10]] = a[i];
+      b[--bucket[out[i] / exp % 10]] = out[i];
 
     // Write the partially sorted version out
     for (i = 0; i < n; i++)
