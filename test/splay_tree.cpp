@@ -1,4 +1,5 @@
 #include "fat_pointer.hpp"
+#include "fixed_array.hpp"
 /// #include <stdlib.h>
 #include <stdlib.h>
 /// #include <stdio.h>
@@ -24,10 +25,15 @@ typedef FatPointer<struct_node> node;
 /// struct node
 struct struct_node
 {
+    struct_node() : value_(), children_() {}
+    struct_node(const struct_node& copy)
+        : value_(copy.value_, true), children_(copy.children_)
+    {
+    }
     /// int* value_;
     FatPointer<int> value_;
     /// node children_[2]
-    node children_[2];
+    FixedArray<node,2> children_;
 };
 
 
@@ -39,6 +45,9 @@ typedef compare_t_return (*compare_t)(FatPointer<int>, FatPointer<int>);
 /// typedef struct
 struct struct_tree
 {
+    struct_tree() : compare_(NULL), root_() {}
+    struct_tree(const struct_tree& copy)
+        : compare_(copy.compare_), root_(copy.root_, true) { }
     /// compare_t compare
     compare_t compare_;
     /// node root_
@@ -52,7 +61,8 @@ static new_node_return new_node(FatPointer<int> value)
 {
     new_node_return __return__;
     /// node new = malloc(sizeof(struct node));
-    node _new = node(struct_node());
+    struct_node temp;
+    node _new(temp);
     /// new->value_ = value;
     _new->value_ = value;
     /// new->children_[0] = new->children_[1] = NULL;
@@ -110,7 +120,8 @@ static search_node_return search_node(compare_t compare,bool_t insert,
         }
         /// out = new_node(item);
         {
-            new_node_return __result__ = new_node(item);
+            new_node_return __result__;
+            __result__ = new_node(item);
             __return__.out = __result__.value;
         }
         /// return NO_ROTATE;
@@ -121,7 +132,8 @@ static search_node_return search_node(compare_t compare,bool_t insert,
     __return__.out = _this;
     /// cmp = compare(item, out->value_);
     {
-        compare_t_return __result__ = compare(item, __return__.out->value_);
+        compare_t_return __result__;
+        __result__ = compare(item, __return__.out->value_);
         cmp = __result__.value;
     }
     /// if(!insert && cmp == 0)
@@ -134,7 +146,8 @@ static search_node_return search_node(compare_t compare,bool_t insert,
     child = cmp < 0 ? LEFT : RIGHT;
     /// splay = search_node(compare, insert, out->children_[child], item, out->children_[child]);
     {
-        search_node_return __result__ = search_node(compare, insert, __return__.out->children_[child], item);
+        search_node_return __result__;
+        __result__ = search_node(compare, insert, __return__.out->children_[child], item);
         __return__.out->children_[child] = __result__.out;
         splay = __result__.value;
     }
@@ -158,12 +171,14 @@ static search_node_return search_node(compare_t compare,bool_t insert,
         // zig-zig
         /// rotate(child, out, out);
         {
-            rotate_return __result__ = rotate(child, __return__.out);
+            rotate_return __result__;
+            __result__ = rotate(child, __return__.out);
             __return__.out = __result__.out;
         }
         /// rotate(splay, out, out);
         {
-            rotate_return __result__ = rotate(splay, __return__.out);
+            rotate_return __result__;
+            __result__ = rotate(splay, __return__.out);
             __return__.out = __result__.out;
         }
     }
@@ -172,12 +187,14 @@ static search_node_return search_node(compare_t compare,bool_t insert,
         // zig-zag
         /// rotate(child, out->children_[child], out->children_[child]);
         {
-            rotate_return __result__ = rotate(splay, __return__.out->children_[child]);
+            rotate_return __result__;
+            __result__ = rotate(splay, __return__.out->children_[child]);
             __return__.out->children_[child] = __result__.out;
         }
         /// rotate(child, out, out);
         {
-            rotate_return __result__ = rotate(child, __return__.out);
+            rotate_return __result__;
+            __result__ = rotate(child, __return__.out);
             __return__.out = __result__.out;
         }
     }
@@ -197,7 +214,8 @@ static search_root_return search_root(compare_t compare, bool_t insert,
     int search;
     /// search = search_node(compare, insert, root, item, GET_RETURN(out));
     {
-        search_node_return __result__ = search_node(compare, insert, root, item);
+        search_node_return __result__;
+        __result__ = search_node(compare, insert, root, item);
         __return__.out = __result__.out;
         search = __result__.value;
     }
@@ -213,15 +231,17 @@ static search_root_return search_root(compare_t compare, bool_t insert,
     {
         /// rotate(search, out, out);
         {
-            rotate_return __result__ = rotate(search, __return__.out);
+            rotate_return __result__;
+            __result__ = rotate(search, __return__.out);
             __return__.out = __result__.out;
         }
     }
     
     /// return compare(out->value_, item) == 0;
     {
-        compare_t_return __result__ = compare(__return__.out->value_, item);
-        __return__.value == 0;
+        compare_t_return __result__;
+        __result__ = compare(__return__.out->value_, item);
+        __return__.value = __result__.value == 0;
         
     }
     return __return__;
@@ -246,7 +266,8 @@ static delete_node_return delete_node(compare_t compare, node root, FatPointer<i
     int search = true;
     /// search = search_root(compare, FALSE, root, item, out);
     {
-        search_root_return __result__ = search_root(compare, FALSE, root, item);
+        search_root_return __result__;
+        __result__ = search_root(compare, FALSE, root, item);
         __return__.out = __result__.out;
         search = __result__.value;
     }
@@ -259,7 +280,8 @@ static delete_node_return delete_node(compare_t compare, node root, FatPointer<i
     }
     /// search_root(find_min, FALSE, out->children_[RIGHT], NULL, out->children_[RIGHT]);
     {
-        search_root_return __result__ = search_root(find_min, FALSE, __result__.out->children_[RIGHT], FatPointer<int>());
+        search_root_return __result__;
+        __result__ = search_root(find_min, FALSE, __return__.out->children_[RIGHT], FatPointer<int>());
         __return__.out->children_[RIGHT] = __result__.out;
     }
     /// out->children_[RIGHT]->children_[LEFT] = out->children_[LEFT];
@@ -369,7 +391,7 @@ void print_tree(tree _this)
 compare_t_return int_compare(FatPointer<int> left,FatPointer<int> right)
 {
     compare_t_return __return__;
-    // return *left - *right;
+    /// return *left - *right;
     __return__.value = *left - *right;
     return __return__;
 }
@@ -395,5 +417,9 @@ int main(void)
     start = find(start, FatPointer<int>(7)).out;
     print_tree(start);
     start = find(start, FatPointer<int>(2)).out;
+    print_tree(start);
+    start = _delete(start, FatPointer<int>(5)).out;
+    print_tree(start);
+    start = _delete(start, FatPointer<int>(2)).out;
     print_tree(start);
 }

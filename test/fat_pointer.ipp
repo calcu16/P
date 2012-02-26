@@ -13,7 +13,7 @@ FatPointer<T>::FatPointer()
 }
 
 template<typename T>
-FatPointer<T>::FatPointer(T t, size_t length)
+FatPointer<T>::FatPointer(const T& t, size_t length)
     : owner_(true), data_(length == 0 ? NULL : new T[length]), length_(length), index_(0)
 {
     for(size_t i = 0; i < length_; ++i)
@@ -28,6 +28,13 @@ FatPointer<T>::FatPointer(const FatPointer<T>& copy, bool deep, int delta)
     if(deep)
         for(size_t i = 0; i < length_; ++i)
             data_[i] = copy.data_[i];
+}
+
+template<typename T>
+template<size_t I>
+FatPointer<T>::FatPointer(const FixedArray<T, I>& copy, int delta)
+    : owner_(false), data_(copy.data_), length_(I), index_(delta)
+{
 }
 
 template<typename T>
@@ -86,15 +93,9 @@ FatPointer<FatPointer<T> > FatPointer<T>::operator&()
 }
 
 template<typename T>
-FatPointer<T> FatPointer<T>::operator+(const int delta)
+FatPointer<T> FatPointer<T>::operator+(const int delta) const
 {
     return FatPointer<T>(*this, false, delta);
-}
-
-template<typename T>
-FatPointer<T> FatPointer<T>::operator-(const int delta)
-{
-    return (*this) + (-delta);
 }
 
 template<typename T>
@@ -170,7 +171,7 @@ FatPointer<T> operator+(const int delta, FatPointer<T> other)
 template<typename T>
 FatPointer<T> operator-(const int delta, FatPointer<T> other)
 {
-    return other - delta;
+    return -delta + other;
 }
 /*
 template<typename T>

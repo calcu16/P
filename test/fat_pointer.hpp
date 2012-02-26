@@ -1,6 +1,8 @@
 #ifndef FAT_POINTER_HPP
 #define FAT_POINTER_HPP
 #include <cstddef>
+template<typename T, size_t I>
+class FixedArray;
 
 template<typename T>
 T* getReference(const T&);
@@ -18,8 +20,10 @@ private:
     friend T* getReference<T>(const T&);
 public:
     FatPointer();
-    FatPointer(T, size_t = 1);
-    FatPointer(const FatPointer<T>&, bool = false, int delta = 0);
+    FatPointer(const T&, size_t = 1);
+    FatPointer(const FatPointer<T>&, bool = false, int = 0);
+    template<size_t I>
+    FatPointer(const FixedArray<T, I>&, int = 0);
     ~FatPointer();
     
     void swap(FatPointer<T>&);
@@ -32,8 +36,7 @@ public:
     
     FatPointer<FatPointer<T> > operator&();
     
-    FatPointer<T> operator+(const int);
-    FatPointer<T> operator-(const int);
+    FatPointer<T> operator+(const int) const;
     
     FatPointer<T>& operator++();
     FatPointer<T> operator++(int);
@@ -53,15 +56,9 @@ public:
     template<typename U> friend class FatPointer<T>;
 };
 template<typename T>
-FatPointer<T> operator+(const int, FatPointer<T>);
+FatPointer<T> operator+(const int, const FatPointer<T>&);
 template<typename T>
-FatPointer<T> operator-(const int, FatPointer<T>);
-
-FatPointer<char> __NULL__();
-
-template<typename T>
-class FatPointer<FatPointer<T> >;
-
+FatPointer<T> operator-(const int, const FatPointer<T>&);
 /*
 template<typename T>
 T& operator[](const int, FatPointer<T>);
