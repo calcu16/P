@@ -32,7 +32,8 @@ static node new_node(void * const value)
 {
     node new = malloc(sizeof(struct node));
     new->value_ = value;
-    new->children_[0] = new->children_[1] = NULL;
+    new->children_[0] = new->children_[1] = NULL;   
+    return new;
 }
 
 static node rotate(int const child, node const root, node out)
@@ -96,9 +97,8 @@ static int search_root(compare_t const compare, bool_t const insert,
     search = search_node(compare, insert, root, item, GET_RETURN(out));
     if(search == NOT_FOUND)
         return 0;
-    if(search == NO_ROTATE)
-        return compare(out->value_, item) == 0;
-    rotate(search, out, GET_RETURN(out));
+    if(search != NO_ROTATE)
+        rotate(search, out, GET_RETURN(out));
     return compare(out->value_, item) == 0;
 }
 
