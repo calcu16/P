@@ -28,6 +28,12 @@ Symbol::Symbol(int count)
 {
 }
 
+Symbol::Symbol(Type t, int count)
+    : type_ (t), match_ (NULL), count_(count),
+        left_(NULL), right_(NULL)
+{
+}
+
 Symbol::Symbol(Type t, const Symbol& left)
     : type_ (t), match_(NULL),
         left_(new Symbol(left)), right_(NULL)
@@ -118,6 +124,8 @@ Symbol Symbol::matchToSymbol(const AST& tree)
         return createNext(matchToInt(tree["value"]));
     } else if(type == "any") {
         return createNext(1);
+    }else if(type == "cost") {
+        return createCost(matchToInt(tree["value"]));
     }else if(type == "name") {
         string op = *tree["op"], name = *tree["name"];
         if(op == "")
@@ -167,6 +175,7 @@ Symbol Symbol::matchToSymbol(const AST& tree)
     cerr << "Error : Unrecognized match " << tree << endl;
     return createSet("");
 }
+#include <iostream>
 Symbol Symbol::interpretString(const std::string& input)
 {
     if(interpreter == NULL)
@@ -179,7 +188,7 @@ Symbol Symbol::interpretString(const std::string& input)
             "anum", createMatch("_") | createLookup("alpha")
                     | createLookup("ddigit"),
             "char", constant("char")("type") & createNext(1)("value"),
-            "reserved", createSet("._:|!*+?{}[]()<>\\"),
+            "reserved", createSet("._:|!*+?{}[]()<>\\#"),
             "range", constant("range")("type")
                     & ((createSet('a', 'z')("left") & createMatch("-")
                             & createSet('a', 'z')("right"))
@@ -197,6 +206,8 @@ Symbol Symbol::interpretString(const std::string& input)
                     & (createLookup("escape")
                         | ((!createLookup("reserved"))
                             & createLookup("char")))("value"),
+            "cost", constant("cost")("type") & createMatch("#")
+                    & createLookup("int")("value"),
             "set", constant("set")("type") & createMatch("[")
                     & (createMatch("^")("except")^-1)
                     & (((constant("char")("type")
@@ -230,10 +241,10 @@ Symbol Symbol::interpretString(const std::string& input)
                     & createLookup("int")("value") & createMatch("}"),
             "subexpr", createMatch("(") & createLookup("expr")
                     & createMatch(")"),
-            "atom", createLookup("match") | createLookup("set")
-                    | createLookup("subexpr") | createLookup("name")
-                    | createLookup("next") | createLookup("lookup")
-                    | createLookup("any"),
+            "atom", createLookup("match")    | createLookup("set")
+                    | createLookup("subexpr")| createLookup("name")
+                    | createLookup("cost")   | createLookup("next")
+                    | createLookup("lookup") | createLookup("any"),
             "maybe_rep", createLookup("rep") | createLookup("atom"),
             "maybe_not", createLookup("not") | createLookup("maybe_rep"),
             "append", constant("append")("type")
@@ -331,6 +342,11 @@ Symbol Symbol::createNext(int count)
     return Symbol(count);
 }
 
+Symbol Symbol::createCost(int cost)
+{
+    return Symbol(COST, cost);
+}
+
 Symbol Symbol::createLookup(const string& name)
 {
     return Symbol(LOOKUP, name);
@@ -338,7 +354,7 @@ Symbol Symbol::createLookup(const string& name)
 AST Symbol::match(const Parser& p, const string& s,
                     size_t start, AST** table) const
 {
-    AST m(start, start, ""), ret(start);
+    AST m(start, start, ""), ret(start), other(start);
     switch(type_)
     {
     case FLATTEN:
@@ -359,27 +375,47 @@ AST Symbol::match(const Parser& p, const string& s,
     case REPEAT:
         if(count_ < 0)
         {
+            other = AST(start, start, "");
             for(int i = 0; i <= -count_; i++)
             {
                 ret = left_->match(p, s, m.endc(), table);
-                if(ret.endc() == -1)
-                    return m;
+                if(!ret)
+                    return other;
                 m = m << ret;
+                if(other.cost() >= m.cost())
+                    other = m;
             }
             return m;
         }
-        for(int i = 0; ; i++)
+        for(int i = 0; i < count_; i++)
         {
             ret = left_->match(p, s, m.endc(), table);
             if(!ret)
-                return i >= count_ ? m : AST(start);
+                return other;
+            if((size_t)ret.endc() == (size_t)m.endc())
+                return (m << ret) << ret;
             m = m << ret;
-            if((size_t)ret.endc() == start)
-                return m << ret;
+        }
+        other = m;
+        for(; ;)
+        {
+            ret = left_->match(p, s, m.endc(), table);
+            if(!ret)
+                return other;
+            if((size_t)ret.endc() == (size_t)m.endc())
+            {
+                m = (m << ret) << ret;
+                if(other.cost() >= m.cost())
+                    other = m;
+                return other;
+            }
+            m = m << ret;
+            if(other.cost() >= m.cost())
+                other = m;
         }
     case NOT:
         ret = left_->match(p, s, start, table);
-        return ret.endc() == -1 ? m : AST(start);
+        return !ret || ret.cost() > 0 ? m : AST(start);
     case NEXT:
         return (start + count_ <= s.length())
                 ? AST(start, start + max(count_,0), s.substr(start, count_))
@@ -400,11 +436,13 @@ AST Symbol::match(const Parser& p, const string& s,
             return ret << right_->match(p, s, ret.endc(), table);
         return AST(start);
     case EITHER:
-        if((ret = left_->match(p, s, start, table)))
-            return ret;
-        return right_->match(p, s, start, table);
+        ret = left_->match(p, s, start, table);
+        other = right_->match(p, s, start, table);
+        return !ret || (other && other.cost() < ret.cost()) ? other : ret;
     case CONSTANT:
         return AST(start, start, *match_);
+    case COST:
+        return AST(start, start, "", count_);
     default:
         return AST();
     }
@@ -493,6 +531,8 @@ ostream& Symbol::print(ostream& out, std::string tab) const
         return left_->print(out << "repeat : " << count_ << endl, tab);
     case NEXT:
         return out << "next : " << count_ << endl;
+    case COST:
+        return out << "cost : " << count_ << endl;
     case LOOKUP:
         return out << "lookup : " << *match_ << endl;
     case CONCAT:

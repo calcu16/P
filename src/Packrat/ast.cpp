@@ -17,25 +17,26 @@ static T* copyp(T* t)
 }
 
 AST::AST(int start)
-    : value_(NULL), start_(start), end_(-1)
+    : value_(NULL), start_(start), end_(-1), cost_(0)
 {
     // Nothing else to do
 }
 
-AST::AST(int start, int end)
-    : value_(NULL), start_(start), end_(end)
+AST::AST(int start, int end, int cost)
+    : value_(NULL), start_(start), end_(end), cost_(cost)
 {
     // Nothing else to do
 }
 
-AST::AST(int start, int end, const string& value)
-    : value_(new string(value)), start_(start), end_(end)
+AST::AST(int start, int end, const string& value, int cost)
+    : value_(new string(value)), start_(start), end_(end), cost_(cost)
 {
     // Nothing else to do
 }
 
 AST::AST(const AST& left, const AST& right)
-    : value_(NULL), start_(left.start_), end_(right.end_)
+    : value_(NULL), start_(left.start_), end_(right.end_),
+        cost_(left.cost_ + right.cost_)
 {
     AST fl = left.flatten(), rl = right.flatten();
     for(unordered_map<string,AST*>::iterator i = fl.assoc_.begin();
@@ -50,13 +51,14 @@ AST::AST(const AST& left, const AST& right)
 
 AST::AST(const string& name, const AST& other)
     : assoc_(NULL), numbered_(NULL), value_(NULL),
-        start_(other.start_), end_(other.end_)
+        start_(other.start_), end_(other.end_), cost_(other.cost_)
 {
     (*this)[name] = other;
 }
 
 AST::AST(const AST& copy)
-    : value_(copyp(copy.value_)), start_(copy.start_), end_(copy.end_)
+    : value_(copyp(copy.value_)), start_(copy.start_), end_(copy.end_),
+        cost_(copy.cost_)
 {
     for(unordered_map<string, AST*>::const_iterator i = copy.assoc_.begin();
             i != copy.assoc_.end(); ++i)
@@ -82,6 +84,7 @@ void AST::swap(AST& other)
     std::swap(value_, other.value_);
     std::swap(start_, other.start_);
     std::swap(end_, other.end_);
+    std::swap(cost_, other.cost_);
 }
 
 AST& AST::operator=(AST rhs)
@@ -96,21 +99,14 @@ AST AST::operator<<(const AST& rhs) const
 {
     if(!rhs)
         return *this;
+    AST out(start_, rhs.end_, cost_ + rhs.cost_);
     if(size() > 0 || (value_ != NULL && *value_ != ""))
-    {
-        AST out(start_, rhs.end_);
         out.numbered_.push_back(new AST(*this));
-        out.numbered_.push_back(new AST(rhs));
-        return out;
-    }
     else
-    {
-        AST out(start_, rhs.end_);
         for(AST::const_iterator i = begin(); i != end(); ++i)
             out.numbered_.push_back(new AST(*i));
-        out.numbered_.push_back(new AST(rhs));
-        return out;
-    }
+    out.numbered_.push_back(new AST(rhs));
+    return out;
 }
 
 AST& AST::operator<<=(const AST& rhs)
@@ -124,21 +120,14 @@ AST AST::operator>>(const AST& rhs) const
 {
     if(!*this)
         return rhs;
-    else if(rhs.size() > 0 || (rhs.value_ != NULL && *rhs.value_ != ""))
-    {
-        AST out(start_, rhs.end_);
-        out.numbered_.push_back(new AST(*this));
+    AST out(start_, rhs.end_, cost_ + rhs.cost_);
+    out.numbered_.push_back(new AST(*this));
+    if(rhs.size() > 0 || (rhs.value_ != NULL && *rhs.value_ != ""))
         out.numbered_.push_back(new AST(rhs));
-        return out;
-    }
     else
-    {
-        AST out(start_, rhs.end_);
-        out.numbered_.push_back(new AST(*this));
         for(AST::const_iterator i = rhs.begin(); i != rhs.end(); ++i)
             out.numbered_.push_back(new AST(*i));
-        return out;
-    }
+    return out;
 }
 
 AST& AST::operator>>=(const AST& rhs)
@@ -169,6 +158,7 @@ AST AST::flatten() const
     AST acc(start_, start_, "");
     for(AST::const_iterator i = begin(); i != end(); ++i)
         acc = AST(acc, *i);
+    acc.cost_ = cost_;
     return acc;
 }
 
@@ -230,6 +220,7 @@ AST::operator bool() const { return end_ != -1; }
 bool AST::operator!() const { return end_ == -1; }
 int AST::startc() const { return start_; }
 int AST::endc() const { return end_; }
+int AST::cost() const { return cost_; }
 
 AST::ConstIterator AST::begin() const
 {
@@ -254,6 +245,7 @@ AST::Iterator AST::end()
 ostream& AST::print(ostream& out, string tab) const
 {
     string ntab = tab + "\t";
+    out << tab << "#" << cost_ << endl;
     if(size())
         for(unordered_map<string, AST*>::const_iterator j = assoc_.begin();
                     j != assoc_.end(); ++j)

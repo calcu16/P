@@ -60,15 +60,21 @@ typedef Iterator iterator;
          * a string value representing the matched string
          */
         std::string *value_;
-        
+        /*
+         * The start and end of this string from the original string.
+         */
         int start_, end_;
+        /*
+         * The cost associated with making this AST
+         */
+        int cost_;
     public:
         /* A Nil AST, represents no match */
         explicit AST(int=-1);
         /* Match of a string */
-        AST(int,int,const std::string&);
+        AST(int,int,const std::string&,int=0);
     private:
-        AST(int,int);
+        AST(int,int,int=0);
         AST(const AST&, const AST&);
         AST(const std::string&, const AST&);
     public:
@@ -145,6 +151,7 @@ typedef Iterator iterator;
          */
         int startc() const;
         int endc() const;
+        int cost() const;
         
         /*
          * iterator methods for the numerical indices

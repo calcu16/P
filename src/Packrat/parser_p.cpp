@@ -29,7 +29,7 @@ const Parser& Parser::getPParser()
             "RBRACK",       "\\}{SEP}",
             "LPAREN",       "\\({SEP}",
             "RPAREN",       "\\){SEP}",
-            "SEMICOLON",    ";{SEP}",
+            "SEMICOLON",    ";{SEP}|{SEP}#1<error=Missing_Semicolon>",
             "ASSIGN",       "={SEP}",
             /** Values **/
             "IDENT",        "<type=ident>!({KEYWORD}|[0-9])"
@@ -49,8 +49,8 @@ const Parser& Parser::getPParser()
             "return",       "<type=return>{RETURN}<value:{expr}>",
             "statement",    "{var_dec}{SEMICOLON}|{return}{SEMICOLON}"
                             "|{expr}{SEMICOLON}|{select}|{compound}",
-            "compound",     "<type=compound>{LBRACK}<value:{statement}*>"
-                            "{RBRACK}",
+            "compounded",   "{RBRACK}|<value:{statement}><next:{compounded}>",
+            "compound",     "<type=compound>{LBRACK}<value:{compounded}>",
             "select",       "<type=if>{IF}LPAREN<cond:{expr}>{RPAREN}"
                             "<if:{statement}>({ELSE}<else:{statement}>)?",
             "args",         "{LPAREN}<arglist:(<typename:{typename}>"
@@ -59,7 +59,7 @@ const Parser& Parser::getPParser()
             "function",     "<return_type:{typename}><fname:{IDENT}>"
                             "<arg:{args}>(<type=function>"
                             "<value:{compound}>|<type=fdec>{SEMICOLON})",
-            "program",      "<type=program>{SEP}<value:{function}*>!"
+            "program",      "!|<type=program>{SEP}<value:{function}><next:{program}>"
         );
     return *PParser;
 }
