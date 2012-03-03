@@ -5,7 +5,7 @@ TEX_FLAGS	= -interaction nonstopmode
 FILT		= bin/gSTLFilt.pl
 FILT_FLAGS	= -hdr:L -cand:L -banner:N
 
-DOC_FILES	= PStandard Thoughts PackratParser
+DOC_FILES	= PStandard Thoughts PackratParser PRules
 PACKRAT_FILES	= symbol parser ast
 WRAPPER_FILES	= 
 SRC_FILES	= main
