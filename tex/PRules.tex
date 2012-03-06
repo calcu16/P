@@ -2,13 +2,12 @@
 \newcommand{\lP}{P}
 \newcommand{\freturn}{\_\_return\_\_}
 \newcommand{\fresult}{\_\_result\_\_}
+\newcommand{\htab}{\ \ \ \ }
 \begin{document}
 \chapter{Deep Translation}
 \section{Pointer}
 $\texttt{type}^*$ $\to$ \texttt{FatPointer<type>}
 \section{Function Declaration}
-\texttt{ret\_type fname(type1 const par1, $\ldots$, otype1 out1, $\ldots$)\{}
-
 \texttt{$\ldots$ out1 $\ldots$}
 
 \texttt{return $\ldots$}
@@ -16,6 +15,8 @@ $\texttt{type}^*$ $\to$ \texttt{FatPointer<type>}
 \texttt{\}}
 
 $\to$
+
+\subsection{Version 1}
 
 \texttt{
 struct fname\_return \{ ret\_type value; otype1 out1; $\ldots$\};
@@ -39,10 +40,61 @@ return \freturn;
 }
 
 \texttt{\}}
+
+\vbox{
+\subsection{Version 2}
+\texttt{ret\_type fname(type1 const par1, $\ldots$, otype1 out1, $\ldots$)\{}
+
+
+
+\texttt{
+struct fname\_return \{ ret\_type value; otype1 out1; $\ldots$\};
+}
+
+\texttt{
+ret\_type fname(type1 const par1, $\ldots$, otype1$^*$ out1, $\ldots$)\{
+}
+
+\texttt{
+struct fname\_return \freturn;
+}
+
+\texttt{
+$\ldots$ \freturn.out1 $\ldots$
+}
+
+\texttt{
+return (\freturn.value = ($\ldots$)), 
+}
+
+\texttt{
+\htab out1 == NULL ? \freturn.out1 : $^*$out1 = \freturn.out1,
+}
+
+\texttt
+{
+\htab $\ldots$,;
+}
+\texttt{
+\htab \freturn;
+}
+
+\texttt{\}}
+}
+
+\vbox{
 \section{Function Call}
 \texttt{value = fname(arg1, ret1);} $\to$
 
+\subsection{Version 1}
+
 \texttt{struct fname\_return \fresult;}
 
-\texttt{
+\texttt{\fresult = fname(arg1);}
+
+\texttt{value = \fresult.value, ret1 = \fresult.out1;}
+
+\subsection{Version 2}
+\texttt{value = fname(arg1, \&ret1, NULL);}
+}
 \end{document}
