@@ -49,8 +49,7 @@ const Parser& Parser::getPParser()
             "return",       "<type=return>{RETURN}<value:{expr}>",
             "statement",    "{var_dec}{SEMICOLON}|{return}{SEMICOLON}"
                             "|{expr}{SEMICOLON}|{select}|{compound}",
-            "compounded",   "{RBRACK}|<value:{statement}><next:{compounded}>",
-            "compound",     "<type=compound>{LBRACK}<value:{compounded}>",
+            "compound",     "<type=compound>{LBRACK}<value:{statement}*>{RBRACK}",
             "select",       "<type=if>{IF}LPAREN<cond:{expr}>{RPAREN}"
                             "<if:{statement}>({ELSE}<else:{statement}>)?",
             "args",         "{LPAREN}<arglist:(<typename:{typename}>"
@@ -59,7 +58,7 @@ const Parser& Parser::getPParser()
             "function",     "<return_type:{typename}><fname:{IDENT}>"
                             "<arg:{args}>(<type=function>"
                             "<value:{compound}>|<type=fdec>{SEMICOLON})",
-            "program",      "!|<type=program>{SEP}<value:{function}><next:{program}>"
+            "program",      "<type=program>{SEP}<value:{function}*>!"
         );
     return *PParser;
 }

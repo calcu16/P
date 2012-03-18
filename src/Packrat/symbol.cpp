@@ -46,9 +46,15 @@ Symbol::Symbol(Type t, const Symbol& left, const Symbol& right)
 {
 }
 
+Symbol::Symbol(Type t, const Symbol& left, const Symbol& right, int count)
+    : type_ (t), match_(NULL), count_(count),
+        left_(new Symbol(left)), right_(new Symbol(right))
+{
+}
+
 Symbol::Symbol(int a, const Symbol& left)
     : type_(REPEAT), match_(NULL), count_(a),
-        left_(new Symbol(left)), right_(NULL)
+        left_(new Symbol(left)), right_(new Symbol(TRY, createNext(0)))
 {
 }
 
@@ -111,12 +117,10 @@ Symbol Symbol::matchToSymbol(const AST& tree)
     } else if(type == "append") {
         return matchToSymbol(tree["value"]) >> matchToSymbol(tree["tail"]);
     } else if(type == "concat") {
-        Symbol prod = createMatch("");
-        for(AST::const_iterator i = tree["value"].begin();
-                    i != tree["value"].end(); ++i)
-            prod = prod & matchToSymbol(*i);
-        if(tree["eof"])
-            prod = prod & !createNext(1);
+        Symbol prod = tree["eof"] ? !createNext(1) : createNext(0);
+        for(AST::const_iterator i = tree["value"].end();
+                    i-- != tree["value"].begin();)
+            prod = matchToSymbol(*i) & prod;
         return prod;
     } else if(type == "lookup") {
         return createLookup(*tree["value"]);
@@ -135,7 +139,11 @@ Symbol Symbol::matchToSymbol(const AST& tree)
         else if(op == ":")
             return matchToSymbol(tree["value"])(name);
     } else if(type == "not") {
-        return !matchToSymbol(tree["value"]);
+        string op = *tree["op"];
+        if(op == "!")
+            return !matchToSymbol(tree["value"]);
+        else
+            return Symbol(TRY, matchToSymbol(tree["value"]));
     } else if(type == "rep") {
         string op = *tree["op"];
         if(op == "*")
@@ -188,7 +196,7 @@ Symbol Symbol::interpretString(const std::string& input)
             "anum", createMatch("_") | createLookup("alpha")
                     | createLookup("ddigit"),
             "char", constant("char")("type") & createNext(1)("value"),
-            "reserved", createSet("._:|!*+?{}[]()<>\\#"),
+            "reserved", createSet("._:|!&*+?{}[]()<>\\#"),
             "range", constant("range")("type")
                     & ((createSet('a', 'z')("left") & createMatch("-")
                             & createSet('a', 'z')("right"))
@@ -223,7 +231,7 @@ Symbol Symbol::interpretString(const std::string& input)
             "rep", constant("rep")("type") & createLookup("atom")("value")
                     & (createMatch("*") | createMatch("+")
                         | createMatch("?"))("op"),
-            "not", constant("not")("type") & createMatch("!")
+            "not", constant("not")("type") & (createMatch("!") | createMatch("#"))("op")
                     & createLookup("maybe_not")("value"),
             "name", constant("name")("type") & createMatch("<")
                     & (createLookup("anum")^0).flatten()("name")
@@ -265,6 +273,7 @@ Symbol Symbol::interpretString(const std::string& input)
             "input", (createLookup("expr") | constant("none")("type"))
                     & !createNext(1)
         );
+    
     return matchToSymbol(interpreter->parse("input", input));
 }
 
@@ -354,7 +363,7 @@ Symbol Symbol::createLookup(const string& name)
 AST Symbol::match(const Parser& p, const string& s,
                     size_t start, AST** table) const
 {
-    AST m(start, start, ""), ret(start), other(start);
+    AST m(start, start, ""), ret(start), other(start), oldright(start), right(start);
     switch(type_)
     {
     case FLATTEN:
@@ -375,44 +384,72 @@ AST Symbol::match(const Parser& p, const string& s,
     case REPEAT:
         if(count_ < 0)
         {
-            other = AST(start, start, "");
+            right = right_->match(p, s, m.endc(), table);
+            if(right)
+            {
+                other = AST(start, start, "");
+                oldright = right;
+            }
             for(int i = 0; i <= -count_; i++)
             {
                 ret = left_->match(p, s, m.endc(), table);
                 if(!ret)
-                    return other;
+                    return right_->type_ == TRY ? other : other + oldright;
                 m = m << ret;
-                if(other.cost() >= m.cost())
+                right = right_->match(p, s, m.endc(), table);
+                if(right && (!other || other.cost() + oldright.cost() >= m.cost() + right.cost()))
                     other = m;
             }
-            return m;
+            
+            return right_->type_ == TRY ? other : other + oldright;
         }
         for(int i = 0; i < count_; i++)
         {
             ret = left_->match(p, s, m.endc(), table);
             if(!ret)
-                return other;
+            {
+                return right_->type_ == TRY ? other : other + oldright;
+            }
             if((size_t)ret.endc() == (size_t)m.endc())
-                return (m << ret) << ret;
+            {
+                other = (m << ret) << ret;
+                return right_->type_ == TRY ? other : other + oldright;
+            }
             m = m << ret;
         }
-        other = m;
+        right = right_->match(p, s, m.endc(), table);
+        if(right)
+        {
+            other = m;
+            oldright = right;
+        }
         for(; ;)
         {
             ret = left_->match(p, s, m.endc(), table);
             if(!ret)
-                return other;
+                return right_->type_ == TRY ? other : other + oldright;
             if((size_t)ret.endc() == (size_t)m.endc())
             {
                 m = (m << ret) << ret;
-                if(other.cost() >= m.cost())
+                right = right_->match(p, s, m.endc(), table);
+                if(right && other.cost() + oldright.cost() >= m.cost() + right.cost())
+                {
                     other = m;
-                return other;
+                    oldright = right;
+                }
+                return right_->type_ == TRY ? other : other + oldright;
             }
             m = m << ret;
-            if(other.cost() >= m.cost())
+            right = right_->match(p, s, m.endc(), table);
+            if(right && (!other || other.cost() + oldright.cost()>= m.cost() + right.cost()))
+            {
                 other = m;
+                oldright = right;
+            }
         }
+    case TRY:
+        ret = left_->match(p, s, start, table);
+        return ret ? AST(start, start, "", ret.cost()) : m;
     case NOT:
         ret = left_->match(p, s, start, table);
         return !ret || ret.cost() > 0 ? m : AST(start);
@@ -465,6 +502,12 @@ Symbol Symbol::operator&(const Symbol& rhs) const
         return rhs;
     if(rhs.type_ == MATCH && *rhs.match_ == "")
         return *this;
+    if(type_ == TRY && rhs.type_ == TRY)
+        return Symbol(TRY, Symbol(CONCAT, *this, rhs));
+     if(type_ == REPEAT)
+        return Symbol(REPEAT, *left_, *right_ & rhs, count_);   
+    if(type_ == NAMING)
+        return Symbol(CONCAT, Symbol(*match_, *left_ & Symbol(TRY, rhs)), rhs);
     return Symbol(CONCAT, *this, rhs);
 }
 
@@ -517,6 +560,7 @@ Symbol Symbol::operator() (const string& name) const
 
 ostream& Symbol::print(ostream& out, std::string tab) const
 {
+    string otab = tab;
     out << tab;
     tab += "\t";
     switch(type_)
@@ -528,7 +572,8 @@ ostream& Symbol::print(ostream& out, std::string tab) const
     case SET:
         return out << "set : " << *match_ << endl;
     case REPEAT:
-        return left_->print(out << "repeat : " << count_ << endl, tab);
+        return right_->print(left_->print(out << "repeat : " << count_ << endl, tab)
+                << otab << "followed by : " << endl, tab);
     case NEXT:
         return out << "next : " << count_ << endl;
     case COST:
@@ -545,6 +590,8 @@ ostream& Symbol::print(ostream& out, std::string tab) const
         return right_->print(left_->print(out << "|" << endl, tab), tab);
     case NOT:
         return left_->print(out << "not : " << endl, tab);
+    case TRY:
+        return left_->print(out << "try : " << endl, tab);
     case CONSTANT:
         return out << "constant : " << *match_ << endl;
         case FLATTEN:

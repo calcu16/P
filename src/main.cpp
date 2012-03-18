@@ -3,11 +3,18 @@
 #include "Packrat/ast.hpp"
 #include "Packrat/symbol.hpp"
 #include "Packrat/parser.hpp"
+#include "Packrat/pst.hpp"
+#include "Wrapper/union.hpp"
+
 using namespace std;
 using namespace packrat;
+using namespace wrapper;
 int main(void)
 {
-    cout << "Hello World!" << endl;
-    cout << Parser::getPParser().parse("program", "int main() { return 0 }") << endl;
+    pst::Block b;
+    Union<int, string> test;
+    test.set<1>("Hello World");
+    cout << test.get<1>() << endl;
+    cout << Parser::getPParser().parse("program", "int main() { a = 0 return 0; }") << endl;
     return 0;
 }

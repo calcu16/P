@@ -144,6 +144,7 @@ AST AST::operator+(const AST& rhs) const
     return AST(*this, rhs);
 }
 
+
 AST& AST::operator+=(const AST& rhs)
 {
     AST out(*this + rhs);

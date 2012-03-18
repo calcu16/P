@@ -13,8 +13,8 @@ namespace packrat
         
         enum Type { NONE, MATCH, SET, RANGE, NEXT,
                     LOOKUP, REPEAT, CONCAT, EITHER,
-                    NAMING, PUSH_FIRST, PUSH_LAST, NOT, CONSTANT,
-                    FLATTEN, COST};
+                    NAMING, PUSH_FIRST, PUSH_LAST, NOT, TRY,
+                    CONSTANT, FLATTEN, COST};
         
         Type type_;
         std::string *match_;
@@ -28,6 +28,7 @@ namespace packrat
         Symbol(int , const Symbol&);
         Symbol(Type, const Symbol&);
         Symbol(Type, const Symbol&, const Symbol&);
+        Symbol(Type, const Symbol&, const Symbol&, int);
         Symbol(const std::string&, const Symbol&);
         
         static char escape(char);
@@ -36,6 +37,7 @@ namespace packrat
         
         static int matchToInt(const AST& tree);
         static Symbol matchToSymbol(const AST& tree);
+        static Symbol matchToConcatSymbol(const AST&, const AST&);
     public:
         Symbol(const Symbol&);
         Symbol(const std::string&);

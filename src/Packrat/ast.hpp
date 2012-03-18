@@ -166,7 +166,6 @@ typedef Iterator iterator;
         std::ostream& print(std::ostream&) const;
     private:
         std::ostream& print(std::ostream&,std::string) const;
-
     };
 }
 /*

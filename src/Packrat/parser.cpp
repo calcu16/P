@@ -45,7 +45,7 @@ size_t Parser::size() const
     return symbols_.size();
 }
 
-
+#include <iostream>
 Parser& Parser::add(const std::string& name, const Symbol& value)
 {
     size_t index;
