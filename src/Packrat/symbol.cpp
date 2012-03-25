@@ -231,7 +231,8 @@ Symbol Symbol::interpretString(const std::string& input)
             "rep", constant("rep")("type") & createLookup("atom")("value")
                     & (createMatch("*") | createMatch("+")
                         | createMatch("?"))("op"),
-            "not", constant("not")("type") & (createMatch("!") | createMatch("#"))("op")
+            "not", constant("not")("type") & (createMatch("!")
+                    | createMatch("#"))("op")
                     & createLookup("maybe_not")("value"),
             "name", constant("name")("type") & createMatch("<")
                     & (createLookup("anum")^0).flatten()("name")
@@ -363,7 +364,8 @@ Symbol Symbol::createLookup(const string& name)
 AST Symbol::match(const Parser& p, const string& s,
                     size_t start, AST** table) const
 {
-    AST m(start, start, ""), ret(start), other(start), oldright(start), right(start);
+    AST m(start, start, ""), ret(start), other(start),
+        oldright(start), right(start);
     switch(type_)
     {
     case FLATTEN:
@@ -397,7 +399,8 @@ AST Symbol::match(const Parser& p, const string& s,
                     return right_->type_ == TRY ? other : other + oldright;
                 m = m << ret;
                 right = right_->match(p, s, m.endc(), table);
-                if(right && (!other || other.cost() + oldright.cost() >= m.cost() + right.cost()))
+                if(right && (!other || other.cost() + oldright.cost()
+                                >= m.cost() + right.cost()))
                     other = m;
             }
             
@@ -432,7 +435,8 @@ AST Symbol::match(const Parser& p, const string& s,
             {
                 m = (m << ret) << ret;
                 right = right_->match(p, s, m.endc(), table);
-                if(right && other.cost() + oldright.cost() >= m.cost() + right.cost())
+                if(right && other.cost() + oldright.cost()
+                            >= m.cost() + right.cost())
                 {
                     other = m;
                     oldright = right;
@@ -441,7 +445,8 @@ AST Symbol::match(const Parser& p, const string& s,
             }
             m = m << ret;
             right = right_->match(p, s, m.endc(), table);
-            if(right && (!other || other.cost() + oldright.cost()>= m.cost() + right.cost()))
+            if(right && (!other || other.cost() + oldright.cost()
+                                    >= m.cost() + right.cost()))
             {
                 other = m;
                 oldright = right;
@@ -502,12 +507,14 @@ Symbol Symbol::operator&(const Symbol& rhs) const
         return rhs;
     if(rhs.type_ == MATCH && *rhs.match_ == "")
         return *this;
+    /*
     if(type_ == TRY && rhs.type_ == TRY)
         return Symbol(TRY, Symbol(CONCAT, *this, rhs));
      if(type_ == REPEAT)
         return Symbol(REPEAT, *left_, *right_ & rhs, count_);   
     if(type_ == NAMING)
         return Symbol(CONCAT, Symbol(*match_, *left_ & Symbol(TRY, rhs)), rhs);
+    */
     return Symbol(CONCAT, *this, rhs);
 }
 
@@ -572,7 +579,8 @@ ostream& Symbol::print(ostream& out, std::string tab) const
     case SET:
         return out << "set : " << *match_ << endl;
     case REPEAT:
-        return right_->print(left_->print(out << "repeat : " << count_ << endl, tab)
+        return right_->print(
+            left_->print(out << "repeat : " << count_ << endl, tab)
                 << otab << "followed by : " << endl, tab);
     case NEXT:
         return out << "next : " << count_ << endl;

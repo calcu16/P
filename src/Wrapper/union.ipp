@@ -28,7 +28,8 @@ void wrapper::Union<T, TS...>::swap(Union<T,TS...>& other)
 }
 
 template<typename T, typename... TS>
-wrapper::Union<T, TS...>& wrapper::Union<T, TS...>::operator=(Union<T,TS...> rhs)
+wrapper::Union<T, TS...>&
+    wrapper::Union<T, TS...>::operator=(Union<T,TS...> rhs)
 {
     swap(rhs);
     return *this;
@@ -85,14 +86,16 @@ void wrapper::Union<T, TS...>::Helper<I>::destroy(int active, void* value) const
 
 template<typename T, typename... TS>
 template<int I, typename U, typename... US>
-void* wrapper::Union<T, TS...>::Helper<I,U,US...>::copy(int active, void* value) const
+void* wrapper::Union<T, TS...>::
+    Helper<I,U,US...>::copy(int active, void* value) const
 {
     return active == I ? new U(*(U*)value) : next_.copy(active, value);
 }
 
 template<typename T, typename... TS>
 template<int I, typename U, typename... US>
-void wrapper::Union<T,TS...>::Helper<I,U,US...>::destroy(int active,void* value) const
+void wrapper::Union<T,TS...>::
+    Helper<I,U,US...>::destroy(int active,void* value) const
 {
     if(active == I)
         delete (U*)value;
