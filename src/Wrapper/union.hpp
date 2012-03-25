@@ -20,12 +20,14 @@ namespace wrapper
         int active_;
         void* value_;
     public:
+        static const size_t size = type<0, T, TS...>::size;
+        
         Union();
         Union(const Union<T,TS...>&);
         ~Union();
         
+        void swap(Union<T,TS...>&);
         Union<T,TS...>& operator=(Union<T,TS...>);
-        void swap(Union<T,TS...>);
         
         template<int I>
         typename type<I,T,TS...>::const_reference get();

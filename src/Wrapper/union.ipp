@@ -21,6 +21,20 @@ wrapper::Union<T, TS...>::~Union()
 }
 
 template<typename T, typename... TS>
+void wrapper::Union<T, TS...>::swap(Union<T,TS...>& other)
+{
+    std::swap(active_, other.active_);
+    std::swap(value_, other.value_);
+}
+
+template<typename T, typename... TS>
+wrapper::Union<T, TS...>& wrapper::Union<T, TS...>::operator=(Union<T,TS...> rhs)
+{
+    swap(rhs);
+    return *this;
+}
+
+template<typename T, typename... TS>
 template<int I>
 typename wrapper::type<I, T, TS...>::const_reference
     wrapper::Union<T, TS...>::get()

@@ -18,7 +18,15 @@ namespace packrat
         struct Expression;
         struct Block;
         
-        typedef wrapper::Union<std::string> Type;
+        struct Type
+        {
+            typedef wrapper::Union<std::string> type;
+            static const int count = 1;
+            static table_t<count>::type names;
+            type value_;
+        };
+        table_t<Type::count>::type Type::names = {"Type"};
+        
         
         typedef std::string Identifier;
         
@@ -31,21 +39,26 @@ namespace packrat
         enum expression_t { IDENTIFIER, UNARY, BINARY };
         struct Expression
         {
-            typedef strings<"Ident","UnaryExpr","BinaryExpr">;
+            static table_t<3>::type names;
             typedef wrapper::Union<Identifier, UnaryExpression, BinaryExpression> type;
             type value_;
         };
+        // table_t<3>::type Expression::names = new std::string[]("Ident", "UnaryExpr", "BinaryExpr");
         
         enum statement_t { SIMPLE, RETURN, BLOCK};
-        typedef wrapper::Union<Expression, Expression, Block> Statement;
+        struct Statement
+        {
+            static table_t<3>::type names;
+            typedef wrapper::Union<Expression, Expression, Block> type;
+            type value_;
+        };
+        // table_t<3>::type Statement::names = {"Simple", "Return", "Block"};
         
         struct Block
         {
             typedef std::list<Statement> type;
             type value_;
         };
-        
-        
     }
 }
 #endif

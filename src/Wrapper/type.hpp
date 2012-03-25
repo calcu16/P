@@ -19,6 +19,7 @@ namespace wrapper
             typedef typename type<J,US...>::const_pointer const_pointer;
         };
     public:
+        static const size_t size = 1 + type<0, TS...>::size;
         typedef typename Helper<I-1,TS...>::value value;
         typedef typename Helper<I-1,TS...>::reference reference;
         typedef typename Helper<I-1,TS...>::const_reference const_reference;
@@ -30,12 +31,23 @@ namespace wrapper
     template<typename T, typename... TS>
     struct type<0, T, TS...>
     {
-        
+        static const size_t size = 1 + type<0, TS...>::size;
         typedef T  value;
         typedef T& reference;
         typedef const T& const_reference;
         typedef T* pointer;
         typedef T const * const_pointer;
+    };
+    
+    template<size_t I>
+    struct type<I>
+    {
+        static const size_t size = 0;
+        typedef void  value;
+        typedef void  reference;
+        typedef void  const_refernce;
+        typedef void* pointer;
+        typedef void* const_pointer;
     };
 }
 #endif
