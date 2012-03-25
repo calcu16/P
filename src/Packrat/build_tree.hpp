@@ -11,52 +11,71 @@
 
 namespace packrat
 {
+    /*
+     * "Templated typedef" to define strings as table_ts of size I
+     */
     template<size_t I>
     struct table_t {
         typedef char const * const type[I];
-        // typedef std::string const * type;
     };
+    
+    /*
+     * A trait indicating the conversion of a list to a fold-left tree
+     */
     template<typename S, typename R, typename SEP>
     struct fold_left_t {};
     
+    /*
+     * BuildTrees are wrappers for things built from abstract syntax 
+     *   trees. These are intended for the creation of new syntax trees.
+     */
     template<typename T>
     struct BuildTree
     {
-        typedef T return_t;
-        T* t_;
-        BuildTree(const T&);
-        BuildTree(const AST&);
-        template<size_t I>
+        typedef T return_t;    // typedef to make return types for functions
+        T* t_;                 // stored value
+        BuildTree(const AST&); // function to build a tree from an abstract 
+                               //   syntax tree
+    
+        /* static function to make a tree based upon which item specified by 
+         * the AST among the values enumerated in the table_t.
+         */
+        template<size_t I>     
         static T makeTree(const AST&, typename table_t<I>::type);
         
-        ~BuildTree();
-        void swap(BuildTree<T>&);
-        BuildTree<T>& operator=(BuildTree<T>);
+        ~BuildTree();                           // destructor
+        void swap(BuildTree<T>&);               // swap function
+        BuildTree<T>& operator=(BuildTree<T>);  // assignment operator
         
-        T& operator*();
-        const T& operator*() const;
+        T& operator*();                 // accessor
+        const T& operator*() const;     // const accessor
     };
 
+    /* This BuildTree struct works on lists of objects */
     template<typename L>
     struct BuildTree<std::list<L> >
     {
-        typedef std::list<L> T;
-        typedef T return_t;
-        T* t_;
-        BuildTree(const AST&);
-        ~BuildTree();
-        void swap(BuildTree<T>&);
-        BuildTree<T>& operator=(BuildTree<T>);
+        typedef std::list<L> T; // convenience typedef for consistency
+        typedef T return_t;     // typedef for return type
+        T* t_;                  // stored value
+        BuildTree(const AST&);  // function to build the tree from an 
+                                //   abstract syntax tree
+                                
+        ~BuildTree();                           // destructor
+        void swap(BuildTree<T>&);               // swap function
+        BuildTree<T>& operator=(BuildTree<T>);  // assignment operator
         
-        T& operator*();
-        const T& operator*() const;
+        T& operator*();               // accessor
+        const T& operator*() const;   // const accessor
     };
     
+    /* This BuildTree struct works on unions */
     template<typename... TS>
     struct BuildTree<wrapper::Union<TS...> >
     {
-        typedef wrapper::Union<TS...> T;
-        typedef T return_t;
+        typedef wrapper::Union<TS...> T; 
+        typedef T return_t;              
+        // describes the number of elements of the union
         static const size_t size = wrapper::type<0, TS...>::size;
         typedef typename table_t<size>::type name_t;
         
@@ -71,6 +90,8 @@ namespace packrat
         
         T& operator*();
         const T& operator*() const;
+    
+    // helpers for template specializations
     private:
         template<size_t I, typename... US>
         struct BuildUnion
@@ -86,11 +107,13 @@ namespace packrat
         };
     };
     
+    /* This BuildTree struct works on tuples */
     template<typename... TS>
     struct BuildTree<std::tuple<TS...> >
     {
         typedef std::tuple<TS...> T;
         typedef T return_t;
+        // describes the number of elements in the tuple
         static const size_t size = wrapper::type<0, TS...>::size;
         typedef typename table_t<size>::type name_t;
         
@@ -105,6 +128,8 @@ namespace packrat
         
         T& operator*();
         const T& operator*() const;
+        
+    // helpers for template specialization
     private:
         template<size_t I, typename... US>
         struct BuildTuple
@@ -120,12 +145,13 @@ namespace packrat
         };
     };
     
+    /* Specifictions for a left folding BuildTree */
     template<typename S, typename R, typename SEP>
     struct BuildTree<fold_left_t<S, R, SEP> >
     {
         typedef fold_left_t<S, R, SEP> T;
         typedef std::tuple<R, SEP, R> return_t;
-        static const size_t size = 2;
+        static const size_t size = 2; // fold lefts are layered with size 2 per level
         typedef typename table_t<size>::type name_t;
         
         return_t* r_;
