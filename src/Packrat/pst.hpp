@@ -17,7 +17,7 @@ namespace packrat
          */
         struct Expression;
         struct BinaryExpression;
-        struct Block;
+        struct UnaryExpression;
         
         struct Type
         {
@@ -31,10 +31,16 @@ namespace packrat
         
         typedef std::string Identifier;
         
-        /*
-        enum unary_t { NEGATE, COMPLEMENT, NOT };
-        typedef std::tuple<unary_t, Expression> UnaryExpression;
-        */
+        struct UnaryOp
+        {
+            typedef int type;
+            enum op_t { NEGATE, COMPLEMENT, NOT, REFERENCE, DEREFERENCE };
+            static const int names_l = 5;
+            typedef table_t<names_l>::type names_t;
+            static names_t names;
+            type value_;
+        };
+        
         struct BinOp
         {
             typedef int type;
@@ -46,11 +52,11 @@ namespace packrat
         };
         
         
-        enum expression_t { IDENTIFIER, UNARY, BINARY };
         struct Expression
         {
+            enum expression_t { IDENTIFIER, UNARY, BINARY };
             typedef wrapper::Union<Identifier,
-                                   /*UnaryExpression,*/
+                                   UnaryExpression,
                                    BinaryExpression> type;
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
@@ -70,9 +76,17 @@ namespace packrat
             operator Expression() const;
         };
         
+        struct UnaryExpression
+        {
+            typedef std::tuple<UnaryOp, Expression> type;
+            static const int names_l = 2;
+            typedef table_t<names_l>::type names_t;
+            static names_t names;
+            std::tuple<UnaryOp, Expression> value_;
+        };
         
-        
-        
+        struct Statement;
+        typedef std::list<Statement> Block;
         enum statement_t { SIMPLE, RETURN, BLOCK};
         struct Statement
         {
@@ -85,12 +99,26 @@ namespace packrat
             type value_;
         };
         
-        
-        struct Block
+        struct Parameter
         {
-            typedef std::list<Statement> type;
+            static const int names_l = 2;
+            typedef table_t<names_l>::type names_t;
+            typedef std::tuple<Type, Identifier> type;
+            static names_t names;
             type value_;
         };
+        
+        typedef std::list<Parameter> Parameters;
+        
+        struct Function
+        {
+            static const int names_l = 4;
+            typedef table_t<names_l>::type names_t;
+            typedef std::tuple<Type, Identifier, Parameters, Block> type;
+            static names_t names;
+            type value_;
+        };
+        typedef std::list<Function> Program;
     }
 }
 #endif

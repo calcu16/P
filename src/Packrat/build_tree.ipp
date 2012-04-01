@@ -190,10 +190,10 @@ BuildTree<T>::BuildTree(const AST& tree)
     : t_(new T()) // initialize tree itself
 {
     // Leverages makeTree to construct the tree from the AST
-    t_->value_ = BuildTree<typename T::type>::template makeTree<T::names_l>(tree, T::names);
+    t_->value_ = BuildTree<typename T::type>::template makeTree<T::names_l>(tree["value"], T::names);
 }
 
-// Templates explicitly disabling BuildTree for int and string
+// Templates instantiating BuildTree for int and string
 template<>
 BuildTree<int>::BuildTree(const AST& tree);
 

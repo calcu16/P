@@ -29,7 +29,7 @@ const Parser& Parser::getPParser()
             "RBRACK",       "\\}{SEP}",
             "LPAREN",       "\\({SEP}",
             "RPAREN",       "\\){SEP}",
-            "SEMICOLON",    ";{SEP}|{SEP}#1<error=Missing_Semicolon>",
+            "SEMICOLON",    ";{SEP}",
             "ASSIGN",       "={SEP}",
             /** Values **/
             "IDENT",        "<type=ident>!({KEYWORD}|[0-9])"
