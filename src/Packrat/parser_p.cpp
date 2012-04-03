@@ -32,33 +32,48 @@ const Parser& Parser::getPParser()
             "SEMICOLON",    ";{SEP}",
             "ASSIGN",       "={SEP}",
             /** Values **/
-            "IDENT",        "<type=ident>!({KEYWORD}|[0-9])"
+            "IDENT",        "<type=Ident>!({KEYWORD}|[0-9])"
                             "<value:[a-zA-Z0-9]+_>{SEP}",
             "INT",          "<type=int><value:"
                             "(0[xX][0-9a-fA-F]+_|[0-7]+_|!0[0-9]+_)>{SEP}",
             "CONSTANT",     "{INT}",
             /* Parser */
-            "atom",         "{IDENT}|{CONSTANT}|{LPAREN}{expr}{RPAREN}",
-            "unary",        "<type=unary><op:UN_OP><value:{unary}>",
-            "sum",          "<type=sum><value:{atom}:(<op:{ADD_OP}>{atom})*>",
-            "assign",       "<type=assign><value:{sum}:"
-                            "(<op:{ASSIGN}><rhs:{sum}>)*>",
-            "expr",         "<type=expr><value:{assign}:(,{assign})*>",
-            "typename",     "<type=typename>(<name:{IDENT}>|{VOID}<name:void>)",
-            "var_dec",      "<type=var_dec><var_type:{typename}><value:{expr}>",
-            "return",       "<type=return>{RETURN}<value:{expr}>",
-            "statement",    "{var_dec}{SEMICOLON}|{return}{SEMICOLON}"
-                            "|{expr}{SEMICOLON}|{select}|{compound}",
-            "compound",     "<type=compound>{LBRACK}<value:{statement}*>{RBRACK}",
-            "select",       "<type=if>{IF}LPAREN<cond:{expr}>{RPAREN}"
-                            "<if:{statement}>({ELSE}<else:{statement}>)?",
-            "args",         "{LPAREN}<arglist:(<typename:{typename}>"
-                            "<argname:{IDENT}>?):(<typename:{typename}>"
-                            "<argname:{IDENT}>?)*>?{RPAREN}",
-            "function",     "<return_type:{typename}><fname:{IDENT}>"
-                            "<arg:{args}>(<type=function>"
-                            "<value:{compound}>|<type=fdec>{SEMICOLON})",
-            "program",      "<type=program>{SEP}<value:{function}*>!"
+            "atom",         "{LPAREN}{expression}{RPAREN}|"
+                            "<type=Ident><value:{IDENT}>",
+            "unary",        "<type=UnaryExpr><value:"
+                                "<Op:[-~!&*]>{SEP}<Expression:{maybe_unary}>"
+                            ">",
+            "maybe_unary",  "{unary}|{atom}",
+            "prod",         "(<type=BinaryExpr><value:"
+                                "<Expression:{maybe_unary}>"
+                                ":(<Op:[*/]>{SEP}<Expression:{maybe_unary}>)+"
+                            ">)",
+            "maybe_prod",   "{prod}|{atom}",
+            "sum",          "(<type=BinaryExpr><value:"
+                                "<Expression:{maybe_prod}>"
+                                ":(<Op:[+-]>{SEP}<Expression:{maybe_prod}>)+"
+                            ">)",
+            "maybe_sum",    "{sum}|{maybe_prod}",
+            "assign",       "(<type=BinaryExpr><value:"
+                                "<Expression:{maybe_sum}>"
+                                ":(<Op:[=]>{SEP}<Expression:{maybe_assign}>)"
+                            ">)",
+            "maybe_assign", "{assign}|{maybe_sum}",
+            "expression",   "<value:{maybe_assign}>",
+            "statement",    "<value:"
+                                "(<type=Simple><value:{expression}>)|"
+                                "(<type=Return>{RETURN}<value:{expression}>)|"
+                                "(<type=Block><value:{block}>)"
+                            ">",
+            "block",        "{LBRACK}<value:{statement}*>{RBRACK}",
+            "type",         "<value:(<type=Simple><value:{IDENT}>)>",
+            "parameter",    "<value:<Type:{type}><Name:{IDENT}>>",
+            "parameters",   "{LPAREN}<value:|{parameter}:({comma}{parameter})+>{RPAREN}",
+            "function",     "<value:"
+                                "<ReturnType:{typename}><fname:{IDENT}>"
+                                "<arg:{pars}><block:{block}>"
+                            ">",
+            "program",      "{SEP}<value:{function}*>!"
         );
     return *PParser;
 }

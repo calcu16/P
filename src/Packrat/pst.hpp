@@ -45,7 +45,7 @@ namespace packrat
         {
             typedef int type;
             enum op_t { ASSIGN, PLUS, MINUS };
-            static const int names_l = 3;
+            static const int names_l = 5;
             typedef table_t<names_l>::type names_t;
             static names_t names;
             type value_;
@@ -58,7 +58,7 @@ namespace packrat
             typedef wrapper::Union<Identifier,
                                    UnaryExpression,
                                    BinaryExpression> type;
-            static const int names_l = 2;
+            static const int names_l = 3;
             typedef table_t<names_l>::type names_t;
             static names_t names;
             type value_;

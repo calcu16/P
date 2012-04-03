@@ -63,6 +63,7 @@ Parser& Parser::add(const std::string& name, const Symbol& value)
 
 Parser& Parser::add(const std::string& name, const std::string& value)
 {
+    // std::cout << "Adding " << name << std::endl;
     return add(name, Symbol(value));
 }
 

@@ -1,3 +1,4 @@
+#include <iostream>
 /* We construct returned trees from ASTs */
 template<typename T>
 typename BuildTree<T>::return_t buildTree(const AST& tree)
@@ -207,7 +208,7 @@ BuildTree<std::list<L> >::BuildTree(const AST& tree)
     t_ = new std::list<L>(); // initialize the list within the tree
     // Build each of the trees in the AST's list structure and add it
     // to the new tree
-    for(AST::const_iterator i = tree.begin(); i != tree.end(); ++i)
+    for(AST::const_iterator i = tree["value"].begin(); i != tree["value"].end(); ++i)
         t_->push_back(buildTree<L>(*i));
 }
 
@@ -215,6 +216,7 @@ BuildTree<std::list<L> >::BuildTree(const AST& tree)
 template<typename... US>
 BuildTree<wrapper::Union<US...> >::BuildTree(const AST& tree, name_t names)
 {
+    std::cout << "Building a Union" << std::endl;
     // Uses helper BuildUnion to store the constructed tree in t_ 
     t_ = new wrapper::Union<US...>();
     BuildUnion<size, US...>(tree, names, *t_);
@@ -227,6 +229,7 @@ BuildTree<wrapper::Union<TS...> >::BuildUnion<I, US...>::BuildUnion
     (const AST& tree, name_t names, T& result)
 {
     typedef typename wrapper::type<I-1, US...>::value type;
+    std::cout << "Comparing '" << names[I-1] << "' with '" << *tree["type"] << "'." << std::endl;
     if(*tree["type"] == names[I-1])
         result.template set<I-1>(buildTree<type>(tree["value"]));
     else
@@ -256,7 +259,7 @@ BuildTree<std::tuple<TS...> >::BuildTuple<I, US...>::BuildTuple
     (const AST& tree, name_t names, T& result)
 {
     typedef typename wrapper::type<I-1, US...>::value type;
-    result.template get<I-1,US...>() = buildTree<type>(tree["value"]);
+    std::get<I-1>(result) = buildTree<type>(tree["value"]);
     BuildTuple<I-1,US...>(tree, names, result);
 }
 

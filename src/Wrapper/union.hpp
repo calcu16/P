@@ -33,6 +33,7 @@ namespace wrapper
         typename type<I,T,TS...>::const_reference get();
         template<int I>
         void set(typename type<I,T,TS...>::const_reference);
+        operator int();
     private:
         void* copyActive() const;
         void destroyActive();

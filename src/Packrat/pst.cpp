@@ -4,10 +4,10 @@ using namespace packrat;
 using namespace packrat::pst;
 
 
-Type::names_t               Type::names                 = {"Type"};
+Type::names_t               Type::names                 = {"Simple"};
 UnaryOp::names_t            UnaryOp::names              = {"-","~","!","&","*"};
-BinOp::names_t              BinOp::names                = {"=","+","-"};
-Expression::names_t         Expression::names           = {"Ident", "BinaryExpr"};
+BinOp::names_t              BinOp::names                = {"=","+","-","*","/"};
+Expression::names_t         Expression::names           = {"Ident", "UnaryExpr", "BinaryExpr"};
 UnaryExpression::names_t    UnaryExpression::names      = {"Op", "Expression"};
 BinaryExpression::names_t   BinaryExpression::names     = {"Value", "Sep"};
 Statement::names_t          Statement::names            = {"Simple", "Return", "Block"};

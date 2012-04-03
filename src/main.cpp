@@ -9,20 +9,16 @@
 
 using namespace std;
 using namespace packrat;
+using namespace packrat::pst;
 using namespace wrapper;
 
 
 int main(void)
 {
-    pst::Block b;
-    Union<int, string> test;
-    AST ast;
-    
-    
-    test.set<1>("Hello World");
-    cout << test.get<1>() << endl;
-    /*
-    cout << Parser::getPParser().parse("program", "int main() { a = 0 return 0; }") << endl;
-    */
+    AST temp = Parser::getPParser().parse("expression","name");
+    Expression exp = buildTree<Expression>(temp);
+    cout << temp << endl;
+    cout << (int)exp.value_ << endl;
+    cout << exp.value_.get<0>() << endl;
     return 0;
 }

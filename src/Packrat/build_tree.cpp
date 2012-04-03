@@ -18,10 +18,14 @@ BuildTree<int>::BuildTree(const AST& tree)
 template<>
 BuildTree<string>::BuildTree(const AST& tree)
 {
-    if(*tree["type"] == "string")
+    if(*tree["type"] == "StringConst")
     {
         // FIXME
         t_ = NULL;
+    }
+    else if(*tree["type"] == "Ident")
+    {
+        t_ = new string(*tree["value"]);
     }
     else
         t_ = new string(*tree);

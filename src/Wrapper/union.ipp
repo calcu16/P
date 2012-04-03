@@ -56,6 +56,12 @@ void wrapper::Union<T, TS...>::set
 }
 
 template<typename T, typename... TS>
+wrapper::Union<T, TS...>::operator int()
+{
+    return active_;
+}
+
+template<typename T, typename... TS>
 void* wrapper::Union<T, TS...>::copyActive() const
 {
     return helper_.copy(active_, value_);
