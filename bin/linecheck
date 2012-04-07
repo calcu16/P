@@ -60,7 +60,11 @@ parser.add_option("-i","--info",
         action="store_const",
         const="info",
         help="Prints out all information about each file")
-
+parser.add_option("-f", "--force",
+        dest="force",
+        action="store_true",
+        default=False,
+        help="Forces line check to check files that look like binaries")
 parser.add_option("-o","--overwrite",
         dest="rename",
         action="store_false",
@@ -253,11 +257,11 @@ for filename in filenames:
                         break
             lines[len(lines):] = line
         inFile.close()
-        if binary:
+        if binary and not options.force:
             print "WARNING! %s appears to be a binary file, skipping" \
                     % filename
         else:
-            if acceptedEnding and acceptedEnding != fileEndings:
+            if acceptedEnding and fileEndings and acceptedEnding != fileEndings:
                 error["endings"] = lineEndingError[fileEndings] \
                                     + error.get("endings","")
                 if not checklist["fix"]["endings"]:

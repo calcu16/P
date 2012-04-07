@@ -15,10 +15,7 @@ using namespace wrapper;
 
 int main(void)
 {
-    AST temp = Parser::getPParser().parse("expression","name");
-    Expression exp = buildTree<Expression>(temp);
-    cout << temp << endl;
-    cout << (int)exp.value_ << endl;
-    cout << exp.value_.get<0>() << endl;
+    AST temp = Parser::getPParser().parse("function","void foo() { c=a+b; } int bar() {return var;}");
+    Program func = buildTree<Program>(temp);
     return 0;
 }

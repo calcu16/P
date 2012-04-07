@@ -216,7 +216,7 @@ BuildTree<std::list<L> >::BuildTree(const AST& tree)
 template<typename... US>
 BuildTree<wrapper::Union<US...> >::BuildTree(const AST& tree, name_t names)
 {
-    std::cout << "Building a Union" << std::endl;
+    // std::cout << "Building a Union" << std::endl;
     // Uses helper BuildUnion to store the constructed tree in t_ 
     t_ = new wrapper::Union<US...>();
     BuildUnion<size, US...>(tree, names, *t_);
@@ -229,9 +229,9 @@ BuildTree<wrapper::Union<TS...> >::BuildUnion<I, US...>::BuildUnion
     (const AST& tree, name_t names, T& result)
 {
     typedef typename wrapper::type<I-1, US...>::value type;
-    std::cout << "Comparing '" << names[I-1] << "' with '" << *tree["type"] << "'." << std::endl;
+    // std::cout << "Comparing '" << names[I-1] << "' with '" << *tree["type"] << "'." << std::endl;
     if(*tree["type"] == names[I-1])
-        result.template set<I-1>(buildTree<type>(tree["value"]));
+        result.template set<I-1>(buildTree<type>(tree));
     else
         BuildUnion<I-1,US...>(tree, names, result);
 }
@@ -269,7 +269,7 @@ BuildTree<std::tuple<TS...> >::BuildTuple<0, US...>::BuildTuple
     (const AST&, name_t, T&)
 {
 }
-
+#include <iostream>
 /* fold_left tree constructor */
 template<typename S, typename R, typename SEP>
 BuildTree<fold_left_t<S, R, SEP> >::BuildTree(const AST& tree, name_t names)
@@ -278,7 +278,6 @@ BuildTree<fold_left_t<S, R, SEP> >::BuildTree(const AST& tree, name_t names)
     // Sets up iterator for loop to construct fold_left structure
     AST::const_iterator i = tree.begin();
     std::string value = names[0], sep = names[1];
-    
     // Make the first element in the innermost level
     R left = buildTree<R>((*i)[value]);
 

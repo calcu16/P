@@ -39,24 +39,24 @@ const Parser& Parser::getPParser()
             "CONSTANT",     "{INT}",
             /* Parser */
             "atom",         "{LPAREN}{expression}{RPAREN}|"
-                            "<type=Ident><value:{IDENT}>",
+                            "<value:{IDENT}>",
             "unary",        "<type=UnaryExpr><value:"
                                 "<Op:[-~!&*]>{SEP}<Expression:{maybe_unary}>"
                             ">",
             "maybe_unary",  "{unary}|{atom}",
             "prod",         "(<type=BinaryExpr><value:"
-                                "<Expression:{maybe_unary}>"
-                                ":(<Op:[*/]>{SEP}<Expression:{maybe_unary}>)+"
+                                "<Value:{maybe_unary}>"
+                                ":(<Op:[*/]>{SEP}<Value:{maybe_unary}>)+"
                             ">)",
             "maybe_prod",   "{prod}|{atom}",
-            "sum",          "(<type=BinaryExpr><value:"
-                                "<Expression:{maybe_prod}>"
-                                ":(<Op:[+-]>{SEP}<Expression:{maybe_prod}>)+"
-                            ">)",
+            "sum",          "<type=BinaryExpr><value:"
+                                "<Value:{maybe_prod}>"
+                                ":(<Op:[+-]>{SEP}<Value:{maybe_prod}>)+"
+                            ">",
             "maybe_sum",    "{sum}|{maybe_prod}",
             "assign",       "(<type=BinaryExpr><value:"
-                                "<Expression:{maybe_sum}>"
-                                ":(<Op:[=]>{SEP}<Expression:{maybe_assign}>)"
+                                "<Value:{maybe_sum}>"
+                                ":(<Op:[=]>{SEP}<Value:{maybe_assign}>)"
                             ">)",
             "maybe_assign", "{assign}|{maybe_sum}",
             "expression",   "<value:{maybe_assign}>",
