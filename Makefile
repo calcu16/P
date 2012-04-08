@@ -7,6 +7,7 @@ FILT_FLAGS	= -hdr:L -cand:L -banner:N
 
 DOC_FILES	= PStandard Thoughts PackratParser PRules
 PACKRAT_FILES	= symbol parser ast pst build_tree
+PRINTING_FILES	= pprinter
 WRAPPER_FILES	= 
 SRC_FILES	= main
 
@@ -18,11 +19,13 @@ OBJ_DIR		= $(BUILD_DIR)/obj
 DOC_DIR		= $(BUILD_DIR)/doc
 TARGET_DIR	= $(BUILD_DIR)/bin
 PACKRAT_DIR	= $(SRC_DIR)/Packrat
+PRINTING_DIR	= $(SRC_DIR)/Printing
 WRAPPER_DIR	= $(SRC_DIR)/Wrapper
 
-NAMES		= $(PACKRAT_FILES) $(SRC_FILES)
+NAMES		= $(PACKRAT_FILES) $(SRC_FILES) $(PRINTING_FILES)
 FILES		= $(PACKRAT_FILES:%=$(PACKRAT_DIR)/%) \
 			$(WRAPPER_FILES:%=$(WRAPPER_DIR)/%) \
+			$(PRINTING_FILES:%=$(PRINTING_DIR)/%) \
 			$(SRC_FILES:%=$(SRC_DIR)/%)
 
 CPP_FILES	= $(FILES:%=%.cpp)

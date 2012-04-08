@@ -40,7 +40,7 @@ const Parser& Parser::getPParser()
             /* Parser */
             "typename",     "<type=Simple><value:{IDENT}|{VOID}>",
             "atom",         "{LPAREN}{expression}{RPAREN}|"
-                            "<value:{IDENT}>",
+                            "<type=Ident><value:{IDENT}>",
             "unary",        "<type=UnaryExpr><value:"
                                 "<Op:[-~!&*]>{SEP}<Expression:{maybe_unary}>"
                             ">",
@@ -59,8 +59,8 @@ const Parser& Parser::getPParser()
                                 "<Value:{maybe_sum}>"
                                 ":(<Op:[=]>{SEP}<Value:{maybe_assign}>)"
                             ">)",
-            "maybe_assign", "{assign}|{maybe_sum}",
-            "expression",   "<value:{maybe_assign}>",
+            "maybe_assign", "<value:{assign}>|{maybe_sum}",
+            "expression",   "{maybe_assign}",
             "statement",    "<value:"
                                 "(<type=Simple><value:{expression}>{SEMICOLON})|"
                                 "(<type=Return>{RETURN}<value:{expression}>{SEMICOLON})|"

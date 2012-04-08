@@ -16,7 +16,7 @@ using namespace wrapper;
 
 int main(void)
 {
-    AST temp = Parser::getPParser().parse("program","int foo() { c=a+b;} void bar() {}");
+    AST temp = Parser::getPParser().parse("program","int foo() { c;} void bar() {}");
     Program func = buildTree<Program>(temp);
     // cout << temp << endl;
     // cout << "------------------" << endl;

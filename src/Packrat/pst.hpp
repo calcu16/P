@@ -88,9 +88,10 @@ namespace packrat
         
         struct Statement;
         typedef std::list<Statement> Block;
-        enum statement_t { SIMPLE, RETURN, BLOCK};
+        
         struct Statement
         {
+            enum statement_t { SIMPLE, RETURN, BLOCK};
             static const int names_l = 3;
             typedef table_t<names_l>::type names_t;
             typedef wrapper::Union<Expression,
@@ -102,6 +103,7 @@ namespace packrat
         
         struct Parameter
         {
+            enum parameter_t { TYPE, NAME };
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             typedef std::tuple<Type, Identifier> type;
