@@ -3,6 +3,7 @@
 template<typename T>
 typename BuildTree<T>::return_t buildTree(const AST& tree)
 {
+    assert(tree);
     BuildTree<T> build(tree);
     return *build;
 }
@@ -259,7 +260,7 @@ BuildTree<std::tuple<TS...> >::BuildTuple<I, US...>::BuildTuple
     (const AST& tree, name_t names, T& result)
 {
     typedef typename wrapper::type<I-1, US...>::value type;
-    std::get<I-1>(result) = buildTree<type>(tree["value"]);
+    std::get<I-1>(result) = buildTree<type>(tree[names[I-1]]);
     BuildTuple<I-1,US...>(tree, names, result);
 }
 

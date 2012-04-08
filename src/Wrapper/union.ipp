@@ -38,7 +38,7 @@ wrapper::Union<T, TS...>&
 template<typename T, typename... TS>
 template<int I>
 typename wrapper::type<I, T, TS...>::const_reference
-    wrapper::Union<T, TS...>::get()
+    wrapper::Union<T, TS...>::get() const
 {
     assert(I == active_);
     return *((typename type<I,T,TS...>::const_pointer)value_);
@@ -56,7 +56,7 @@ void wrapper::Union<T, TS...>::set
 }
 
 template<typename T, typename... TS>
-wrapper::Union<T, TS...>::operator int()
+wrapper::Union<T, TS...>::operator int() const
 {
     return active_;
 }

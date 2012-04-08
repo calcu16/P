@@ -30,10 +30,10 @@ namespace wrapper
         Union<T,TS...>& operator=(Union<T,TS...>);
         
         template<int I>
-        typename type<I,T,TS...>::const_reference get();
+        typename type<I,T,TS...>::const_reference get() const;
         template<int I>
         void set(typename type<I,T,TS...>::const_reference);
-        operator int();
+        operator int() const;
     private:
         void* copyActive() const;
         void destroyActive();

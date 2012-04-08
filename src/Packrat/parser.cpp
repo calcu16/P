@@ -67,6 +67,7 @@ Parser& Parser::add(const std::string& name, const std::string& value)
     return add(name, Symbol(value));
 }
 
+#include <cassert>
 AST Parser::lookup(const std::string& name,
                     const std::string& input, size_t index, AST** table) const
 {

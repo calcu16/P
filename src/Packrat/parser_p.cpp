@@ -38,6 +38,7 @@ const Parser& Parser::getPParser()
                             "(0[xX][0-9a-fA-F]+_|[0-7]+_|!0[0-9]+_)>{SEP}",
             "CONSTANT",     "{INT}",
             /* Parser */
+            "typename",     "<type=Simple><value:{IDENT}|{VOID}>",
             "atom",         "{LPAREN}{expression}{RPAREN}|"
                             "<value:{IDENT}>",
             "unary",        "<type=UnaryExpr><value:"
@@ -61,8 +62,8 @@ const Parser& Parser::getPParser()
             "maybe_assign", "{assign}|{maybe_sum}",
             "expression",   "<value:{maybe_assign}>",
             "statement",    "<value:"
-                                "(<type=Simple><value:{expression}>)|"
-                                "(<type=Return>{RETURN}<value:{expression}>)|"
+                                "(<type=Simple><value:{expression}>{SEMICOLON})|"
+                                "(<type=Return>{RETURN}<value:{expression}>{SEMICOLON})|"
                                 "(<type=Block><value:{block}>)"
                             ">",
             "block",        "{LBRACK}<value:{statement}*>{RBRACK}",
@@ -70,8 +71,10 @@ const Parser& Parser::getPParser()
             "parameter",    "<value:<Type:{type}><Name:{IDENT}>>",
             "parameters",   "{LPAREN}<value:|{parameter}:({comma}{parameter})+>{RPAREN}",
             "function",     "<value:"
-                                "<ReturnType:{typename}><fname:{IDENT}>"
-                                "<arg:{pars}><block:{block}>"
+                                "<ReturnType:<value:{typename}>>"
+                                "<Name:{IDENT}>"
+                                "<Pars:{parameters}>"
+                                "<Block:{block}>"
                             ">",
             "program",      "{SEP}<value:{function}*>!"
         );

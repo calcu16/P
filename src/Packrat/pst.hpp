@@ -21,6 +21,7 @@ namespace packrat
         
         struct Type
         {
+            enum type_t { TYPENAME };
             typedef wrapper::Union<std::string> type;
             static const int names_l = 1;
             typedef table_t<names_l>::type names_t;
@@ -112,6 +113,7 @@ namespace packrat
         
         struct Function
         {
+            enum function_t { RETURN_TYPE, NAME, PARAMETERS, BODY };
             static const int names_l = 4;
             typedef table_t<names_l>::type names_t;
             typedef std::tuple<Type, Identifier, Parameters, Block> type;
