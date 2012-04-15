@@ -23,6 +23,28 @@ static ostream& operator<<(ostream& out, const Type& type)
     return out;
 }
 
+static ostream& operator<<(ostream& out, const BinOp& op)
+{
+    switch(op.value_)
+    {
+    case BinOp::ASSIGN:
+        return out << " = ";
+    case BinOp::PLUS:
+        return out << " + ";
+    case BinOp::MINUS:
+        return out << " - ";
+    default:
+        assert(0);
+    }
+}
+
+static ostream& operator<<(ostream& out, const BinaryExpression& bexpr)
+{
+    return out  << get<BinaryExpression::LHS>(bexpr.value_)
+                << get<BinaryExpression::OP >(bexpr.value_)
+                << get<BinaryExpression::RHS>(bexpr.value_);
+}
+
 static ostream& operator<<(ostream& out, const Expression& expr)
 {
     assert((int)expr.value_ != -1);
@@ -35,7 +57,7 @@ static ostream& operator<<(ostream& out, const Expression& expr)
         out << "un";
         break;
     case Expression::BINARY:
-        out << "bin";
+        out << expr.value_.get<Expression::BINARY>();
         break;
     default:
         assert(0);
@@ -85,7 +107,7 @@ static ostream& operator<<(ostream& out, const Parameters& pars)
     out << "(";
     if(i != pars.end()) for(;;)
     {
-        out << pars;
+        out << *i;
         if(++i == pars.end())
             break;
         out << ", ";

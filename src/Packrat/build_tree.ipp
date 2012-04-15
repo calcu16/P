@@ -221,6 +221,7 @@ BuildTree<wrapper::Union<US...> >::BuildTree(const AST& tree, name_t names)
     // Uses helper BuildUnion to store the constructed tree in t_ 
     t_ = new wrapper::Union<US...>();
     BuildUnion<size, US...>(tree, names, *t_);
+    assert((int)(*t_) != -1);
 }
 
 /* BuildUnion: Helper for union tree constructor */
@@ -327,7 +328,7 @@ std::tuple<R, SEP, R> BuildTree<fold_left_t<S, R, SEP> >::makeTree(const AST& tr
     BuildTree<T> build(tree, names);
     return *build;
 }
-
+#include <iostream>
 // makeTree for int trees
 template<>
 template<size_t I>
@@ -335,7 +336,7 @@ int BuildTree<int>::makeTree(const AST& tree, typename table_t<I>::type names)
 {
     size_t i;
     for(i = 0; i < I; ++i)
-        if(*tree["value"] == names[i])
+        if(*tree == names[i])
             break;
     return i;
 }

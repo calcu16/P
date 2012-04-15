@@ -30,6 +30,7 @@ const Parser& Parser::getPParser()
             "LPAREN",       "\\({SEP}",
             "RPAREN",       "\\){SEP}",
             "SEMICOLON",    ";{SEP}",
+            "COMMA",        ",{SEP}",
             "ASSIGN",       "={SEP}",
             /** Values **/
             "IDENT",        "<type=Ident>!({KEYWORD}|[0-9])"
@@ -47,19 +48,19 @@ const Parser& Parser::getPParser()
             "maybe_unary",  "{unary}|{atom}",
             "prod",         "(<type=BinaryExpr><value:"
                                 "<Value:{maybe_unary}>"
-                                ":(<Op:[*/]>{SEP}<Value:{maybe_unary}>)+"
+                                ":(<Op:<value:[*/]>>{SEP}<Value:{maybe_unary}>)+"
                             ">)",
             "maybe_prod",   "{prod}|{atom}",
             "sum",          "<type=BinaryExpr><value:"
                                 "<Value:{maybe_prod}>"
-                                ":(<Op:[+-]>{SEP}<Value:{maybe_prod}>)+"
+                                ":(<Op:<value:[+-]>>{SEP}<Value:<value:{maybe_prod}>>)+"
                             ">",
             "maybe_sum",    "{sum}|{maybe_prod}",
             "assign",       "(<type=BinaryExpr><value:"
-                                "<Value:{maybe_sum}>"
-                                ":(<Op:[=]>{SEP}<Value:{maybe_assign}>)"
+                                "<Value:<value:{maybe_sum}>>"
+                                ":(<Op:<value:[=]>>{SEP}<Value:<value:{maybe_assign}>>)"
                             ">)",
-            "maybe_assign", "<value:{assign}>|{maybe_sum}",
+            "maybe_assign", "{assign}|{maybe_sum}",
             "expression",   "{maybe_assign}",
             "statement",    "<value:"
                                 "(<type=Simple><value:{expression}>{SEMICOLON})|"
@@ -69,7 +70,7 @@ const Parser& Parser::getPParser()
             "block",        "{LBRACK}<value:{statement}*>{RBRACK}",
             "type",         "<value:(<type=Simple><value:{IDENT}>)>",
             "parameter",    "<value:<Type:{type}><Name:{IDENT}>>",
-            "parameters",   "{LPAREN}<value:|{parameter}:({comma}{parameter})+>{RPAREN}",
+            "parameters",   "{LPAREN}<value:({parameter}:({COMMA}{parameter})*)|>{RPAREN}",
             "function",     "<value:"
                                 "<ReturnType:<value:{typename}>>"
                                 "<Name:{IDENT}>"
