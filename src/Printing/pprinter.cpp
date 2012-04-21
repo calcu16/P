@@ -3,11 +3,12 @@
 #include <iostream>
 #include <tuple>
 
-using namespace std;
 using namespace packrat;
 using namespace pst;
 static ostream& operator<<(ostream&, const Statement&);
 static ostream& operator<<(ostream&, const Expression&);
+bool IS_NEWLINE = true;
+int INDENT_NO = 0;
 
 static ostream& operator<<(ostream& out, const Type& type)
 {
@@ -15,7 +16,7 @@ static ostream& operator<<(ostream& out, const Type& type)
     switch(type.value_)
     {
     case Type::TYPENAME:
-        out << type.value_.get<Type::TYPENAME>();
+        indentedOutput(out, type.value_.get<Type::TYPENAME>());
         break;
     default:
         assert(0);
@@ -29,13 +30,13 @@ static ostream& operator<<(ostream& out, const Expression& expr)
     switch(expr.value_)
     {
     case Expression::IDENTIFIER:
-        out << expr.value_.get<Expression::IDENTIFIER>();
+        indentedOutput(out, expr.value_.get<Expression::IDENTIFIER>());
         break;
     case Expression::UNARY:
-        out << "un";
+        indentedOutput(out, "un");
         break;
     case Expression::BINARY:
-        out << "bin";
+        indentedOutput(out, "bin");
         break;
     default:
         assert(0);
@@ -45,10 +46,14 @@ static ostream& operator<<(ostream& out, const Expression& expr)
 
 static ostream& operator<<(ostream& out, const Block& block)
 {
-    out << "{" << endl;
-    for(Block::const_iterator i = block.begin(); i != block.end(); ++i)
-        out << *i << endl;
-    out << "}" << endl;
+    indentedOutput(out, "{\n");
+    ++INDENT_NO;
+    for(Block::const_iterator i = block.begin(); i != block.end(); ++i) {
+        indentedOutput(out, *i);
+        indentedOutput(out, "\n");
+    }
+    --INDENT_NO;
+    indentedOutput(out, "}\n");
     return out;
 }
 
@@ -58,13 +63,17 @@ static ostream& operator<<(ostream& out, const Statement& statement)
     switch(statement.value_)
     {
     case Statement::RETURN:
-        out << "return " << statement.value_.get<Statement::RETURN>() << ";";
+        indentedOutput(out, "return ");
+        indentedOutput(out, statement.value_.get<Statement::RETURN>());
+        indentedOutput(out, ";");
         break;
     case Statement::SIMPLE:
-        out << statement.value_.get<Statement::SIMPLE>() << ";";
+        indentedOutput(out, statement.value_.get<Statement::SIMPLE>());
+        indentedOutput(out, ";");
         break;
     case Statement::BLOCK:
-        out << statement.value_.get<Statement::BLOCK>();
+        indentedOutput(out, statement.value_.get<Statement::BLOCK>());
+        indentedOutput(out, ";");
         break;
     default:
         assert(0);
@@ -74,40 +83,64 @@ static ostream& operator<<(ostream& out, const Statement& statement)
 
 static ostream& operator<<(ostream& out, const Parameter& par)
 {
-    return out  << get<Parameter::TYPE>(par.value_)
-                << " "
-                << get<Parameter::NAME>(par.value_);
+    indentedOutput(out, get<Parameter::TYPE>(par.value_));
+    indentedOutput(out, " ");
+    indentedOutput(out, get<Parameter::NAME>(par.value_));
+    return out;
 }
 
 static ostream& operator<<(ostream& out, const Parameters& pars)
 {
     Parameters::const_iterator i = pars.begin();
-    out << "(";
+    indentedOutput(out, "(");
     if(i != pars.end()) for(;;)
     {
-        out << pars;
+        indentedOutput(out, pars);
         if(++i == pars.end())
             break;
-        out << ", ";
+        indentedOutput(out, ", ");
     }
-    out << ")";
+    indentedOutput(out, ")");
     return out;
 }
 
 static ostream& operator<<(ostream& out, const Function& func)
 {
-    out << get<Function::RETURN_TYPE>(func.value_)
-        << " "
-        << get<Function::NAME>(func.value_) 
-        << get<Function::PARAMETERS>(func.value_)
-        << endl
-        << get<Function::BODY>(func.value_);
+    indentedOutput(out, get<Function::RETURN_TYPE>(func.value_));
+    indentedOutput(out, " ");
+    indentedOutput(out, get<Function::NAME>(func.value_));
+    indentedOutput(out, get<Function::PARAMETERS>(func.value_));
+    indentedOutput(out, "\n");
+    indentedOutput(out, get<Function::BODY>(func.value_));
     return out;
 }
 
 ostream& operator<<(ostream& out, const Program& program)
 {
     for(list<Function>::const_iterator i = program.begin(); i != program.end(); ++i)
-        out << *i << endl;
+    {
+        indentedOutput(out, *i);
+        indentedOutput(out, "\n");
+    }
     return out;
 }
+
+/*
+static void indentedOutput (ostream &out, const string line)
+{
+    while (char cur = *message) {
+        if (newline) {
+            for (int i = 0, i < indent, ++i) {
+                out << "    ";
+            }
+            newline = false;
+        }
+        out << cur;
+        if (cur == '\n') {
+            newline = true;
+        }
+        ++message;
+    }
+}
+*/
+
