@@ -68,6 +68,7 @@ namespace packrat
         
         struct BinaryExpression
         {
+            enum binary_expression_t { LHS, OP, RHS };
             typedef fold_left_t<BinaryExpression, Expression, BinOp> type;
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;

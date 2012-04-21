@@ -74,7 +74,7 @@ $(DOC_DIR)/%.pdf: $(DOC_DIR)
 $(OBJ_DIR)/%.o: | $(OBJ_DIR)
 	$(CXX) $(CXX_FLAGS) -c -o $@ $(call LOOKUP,$(*F))
 
-# giving up and LaTeX has no mahic
+# giving up and LaTeX has no magic
 $(DOC_DIR)/PackratParser.tex : $(TEX_DIR)/PackratParser.tex $(TEX_DIR)/PackratParser/usingAST.tex
 $(DOC_DIR)/PStandard.tex : $(TEX_DIR)/PStandard.tex $(TEX_DIR)/PStandard/operation.tex $(TEX_DIR)/PStandard/scope.tex $(TEX_DIR)/PStandard/terms.tex
 $(DOC_DIR)/Thoughts.tex : $(TEX_DIR)/Thoughts.tex $(TEX_DIR)/Thoughts/introduction.tex $(TEX_DIR)/Thoughts/optimizations.tex $(TEX_DIR)/Thoughts/semantics.tex

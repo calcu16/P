@@ -24,6 +24,28 @@ static ostream& operator<<(ostream& out, const Type& type)
     return out;
 }
 
+static ostream& operator<<(ostream& out, const BinOp& op)
+{
+    switch(op.value_)
+    {
+    case BinOp::ASSIGN:
+        return out << " = ";
+    case BinOp::PLUS:
+        return out << " + ";
+    case BinOp::MINUS:
+        return out << " - ";
+    default:
+        assert(0);
+    }
+}
+
+static ostream& operator<<(ostream& out, const BinaryExpression& bexpr)
+{
+    return out  << get<BinaryExpression::LHS>(bexpr.value_)
+                << get<BinaryExpression::OP >(bexpr.value_)
+                << get<BinaryExpression::RHS>(bexpr.value_);
+}
+
 static ostream& operator<<(ostream& out, const Expression& expr)
 {
     assert((int)expr.value_ != -1);
@@ -125,22 +147,4 @@ ostream& operator<<(ostream& out, const Program& program)
     return out;
 }
 
-/*
-static void indentedOutput (ostream &out, const string line)
-{
-    while (char cur = *message) {
-        if (newline) {
-            for (int i = 0, i < indent, ++i) {
-                out << "    ";
-            }
-            newline = false;
-        }
-        out << cur;
-        if (cur == '\n') {
-            newline = true;
-        }
-        ++message;
-    }
-}
-*/
 
