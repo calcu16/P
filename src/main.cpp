@@ -13,10 +13,21 @@ using namespace packrat;
 using namespace packrat::pst;
 using namespace wrapper;
 
+const string program =
+"int foo(int a, int b)"
+"{"
+"   return a + b;"
+"}"
+""
+"int main()"
+"{"
+"   return foo(a,b);"
+"}"
+;
 
 int main(void)
 {
-    AST temp = Parser::getPParser().parse("program","int foo(int a, int b) { return a + b;}");
+    AST temp = Parser::getPParser().parse("program",program);
     cout << temp << endl;
     cout << "------------------" << endl;
     Program func = buildTree<Program>(temp);

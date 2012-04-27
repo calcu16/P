@@ -18,6 +18,7 @@ namespace packrat
         struct Expression;
         struct BinaryExpression;
         struct UnaryExpression;
+        struct Call;
         
         struct Type
         {
@@ -55,11 +56,24 @@ namespace packrat
         
         struct Expression
         {
-            enum expression_t { IDENTIFIER, UNARY, BINARY };
+            enum expression_t { IDENTIFIER, UNARY, BINARY, CALL };
             typedef wrapper::Union<Identifier,
                                    UnaryExpression,
-                                   BinaryExpression> type;
-            static const int names_l = 3;
+                                   BinaryExpression,
+                                   Call> type;
+            static const int names_l = 4;
+            typedef table_t<names_l>::type names_t;
+            static names_t names;
+            type value_;
+        };
+        
+        typedef std::list<Expression> Arguments;
+        
+        struct Call
+        {
+            enum call_t { IDENTIFIER, ARGUMENTS };
+            typedef std::tuple<Identifier, Arguments> type;
+            static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
             type value_;

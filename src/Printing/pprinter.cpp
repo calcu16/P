@@ -39,6 +39,24 @@ static ostream& operator<<(ostream& out, const BinOp& op)
     }
 }
 
+static ostream& operator<<(ostream& out, const Arguments& arguments)
+{
+    out << "(";
+    for(Arguments::const_iterator i = arguments.begin(); i != arguments.end(); )
+    {
+        out << *i;
+        if(++i != arguments.end())
+            out << ",";
+    }
+    out << ")";
+}
+
+static ostream& operator<<(ostream& out, const Call& call)
+{
+    return out  << get<Call::IDENTIFIER>(call.value_)
+                << get<Call::ARGUMENTS>(call.value_);
+}
+
 static ostream& operator<<(ostream& out, const BinaryExpression& bexpr)
 {
     return out  << get<BinaryExpression::LHS>(bexpr.value_)
@@ -58,7 +76,10 @@ static ostream& operator<<(ostream& out, const Expression& expr)
         indentedOutput(out, "un");
         break;
     case Expression::BINARY:
-        indentedOutput(out, "bin");
+        indentedOutput(out, expr.value_.get<Expression::BINARY>());
+        break;
+    case Expression::CALL:
+        indentedOutput(out, expr.value_.get<Expression::CALL>());
         break;
     default:
         assert(0);
@@ -117,7 +138,7 @@ static ostream& operator<<(ostream& out, const Parameters& pars)
     indentedOutput(out, "(");
     if(i != pars.end()) for(;;)
     {
-        indentedOutput(out, pars);
+        indentedOutput(out, *i);
         if(++i == pars.end())
             break;
         indentedOutput(out, ", ");

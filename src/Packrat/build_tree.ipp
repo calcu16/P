@@ -221,6 +221,15 @@ BuildTree<wrapper::Union<US...> >::BuildTree(const AST& tree, name_t names)
     // Uses helper BuildUnion to store the constructed tree in t_ 
     t_ = new wrapper::Union<US...>();
     BuildUnion<size, US...>(tree, names, *t_);
+    /*
+    if((int)(*t_) == -1)
+    {
+        std::cerr << tree << std::endl;
+        std::cerr << "Does not match anything in " << std::endl;
+        for(size_t i = 0; i < size; ++i)
+            std::cerr << "\t" << names[i] << std::endl;
+        assert(false);
+    }*/
     assert((int)(*t_) != -1);
 }
 

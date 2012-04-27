@@ -42,25 +42,34 @@ const Parser& Parser::getPParser()
             "typename",     "<type=Simple><value:{IDENT}|{VOID}>",
             "atom",         "{LPAREN}{expression}{RPAREN}|"
                             "<type=Ident><value:{IDENT}>",
+            "args",         "{ignore_comma}:({COMMA}{ignore_comma})*|",
+            "call",         "<type=Call><value:"
+                                "<Function:{IDENT}>"
+                                "{LPAREN}"
+                                    "<Arguments:<value:{args}>>"
+                                "{RPAREN}"
+                            ">",
+            "maybe_call",   "{call}|{atom}",
             "unary",        "<type=UnaryExpr><value:"
                                 "<Op:[-~!&*]>{SEP}<Expression:{maybe_unary}>"
                             ">",
-            "maybe_unary",  "{unary}|{atom}",
-            "prod",         "(<type=BinaryExpr><value:"
+            "maybe_unary",  "{unary}|{maybe_call}",
+            "prod",         "<type=BinaryExpr><value:"
                                 "<Value:{maybe_unary}>"
                                 ":(<Op:<value:[*/]>>{SEP}<Value:{maybe_unary}>)+"
-                            ">)",
-            "maybe_prod",   "{prod}|{atom}",
+                            ">",
+            "maybe_prod",   "{prod}|{maybe_unary}",
             "sum",          "<type=BinaryExpr><value:"
                                 "<Value:{maybe_prod}>"
                                 ":(<Op:<value:[+-]>>{SEP}<Value:<value:{maybe_prod}>>)+"
                             ">",
             "maybe_sum",    "{sum}|{maybe_prod}",
-            "assign",       "(<type=BinaryExpr><value:"
+            "assign",       "<type=BinaryExpr><value:"
                                 "<Value:<value:{maybe_sum}>>"
                                 ":(<Op:<value:[=]>>{SEP}<Value:<value:{maybe_assign}>>)"
-                            ">)",
+                            ">",
             "maybe_assign", "{assign}|{maybe_sum}",
+            "ignore_comma", "{maybe_assign}",
             "expression",   "{maybe_assign}",
             "statement",    "<value:"
                                 "(<type=Simple><value:{expression}>{SEMICOLON})|"
