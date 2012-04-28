@@ -48,7 +48,7 @@ P code in with a P abstract syntax modelled very much after C's abstract
 syntax. Then, statements are converted with three primary rules:
 
 1. Pointers are converted to FatPointers, a class created to wrap pointers 
-with additional data about whether they are unique and overloaded copying 
+with additional wrapper data for garbage collection and overloaded copying 
 for the purposes of deeper copying.
 2. Function declarations are reconstructed using newly-defined structs for 
 return values, which combine the by-result outputs and the function type 
