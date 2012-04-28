@@ -1,0 +1,24 @@
+\documentclass[letterpaper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz}
+
+\begin{document}
+\tikzstyle{foo}=[minimum size=15mm,inner sep=0pt]
+\begin{tikzpicture}[node distance=40mm]
+
+\node (file) [foo,circle,draw] {Input File};
+\node (parser) [foo,circle,draw,right of=file] {Parser};
+\node (printer) [foo,circle,draw,right of=parser] {Pretty Printer};
+\node (code) [foo,circle,draw,right of=printer] {C++ Code};
+
+%\node at (file.north) [above] {Input File};
+%\node at (parser.north) [above] {Parser};
+%\node at (printer.north) [above] {Pretty Printer};
+%\node at (code.north) [above] {C++ Code};
+
+\draw [->] (file) -- (parser);
+\draw [->] (parser) -- (printer);
+\draw [->] (printer) -- (code);
+
+\end{tikzpicture}
+\end{document}
