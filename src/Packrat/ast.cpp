@@ -144,6 +144,7 @@ AST AST::operator+(const AST& rhs) const
     return AST(*this, rhs);
 }
 
+
 AST& AST::operator+=(const AST& rhs)
 {
     AST out(*this + rhs);
@@ -186,6 +187,16 @@ AST& AST::operator[](size_t index)
 const AST& AST::operator[](size_t index) const
 {
     return index >= length() ? NO_AST : *numbered_[index];
+}
+
+AST& AST::operator[](int index)
+{
+    return (*this)[(size_t)index];
+}
+
+const AST& AST::operator[](int index) const
+{
+    return (*this)[(size_t)index];
 }
 
 size_t AST::length() const { return numbered_.size(); }

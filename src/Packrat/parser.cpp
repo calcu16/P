@@ -45,7 +45,7 @@ size_t Parser::size() const
     return symbols_.size();
 }
 
-
+#include <iostream>
 Parser& Parser::add(const std::string& name, const Symbol& value)
 {
     size_t index;
@@ -63,9 +63,11 @@ Parser& Parser::add(const std::string& name, const Symbol& value)
 
 Parser& Parser::add(const std::string& name, const std::string& value)
 {
+    // std::cout << "Adding " << name << std::endl;
     return add(name, Symbol(value));
 }
 
+#include <cassert>
 AST Parser::lookup(const std::string& name,
                     const std::string& input, size_t index, AST** table) const
 {

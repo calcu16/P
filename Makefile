@@ -5,8 +5,9 @@ TEX_FLAGS	= -interaction nonstopmode
 FILT		= bin/gSTLFilt.pl
 FILT_FLAGS	= -hdr:L -cand:L -banner:N
 
-DOC_FILES	= PStandard Thoughts PackratParser
-PACKRAT_FILES	= symbol parser ast
+DOC_FILES	= PStandard Thoughts PackratParser PRules
+PACKRAT_FILES	= symbol parser ast pst build_tree
+PRINTING_FILES	= pprinter
 WRAPPER_FILES	= 
 SRC_FILES	= main
 
@@ -18,11 +19,13 @@ OBJ_DIR		= $(BUILD_DIR)/obj
 DOC_DIR		= $(BUILD_DIR)/doc
 TARGET_DIR	= $(BUILD_DIR)/bin
 PACKRAT_DIR	= $(SRC_DIR)/Packrat
+PRINTING_DIR	= $(SRC_DIR)/Printing
 WRAPPER_DIR	= $(SRC_DIR)/Wrapper
 
-NAMES		= $(PACKRAT_FILES) $(SRC_FILES)
+NAMES		= $(PACKRAT_FILES) $(SRC_FILES) $(PRINTING_FILES)
 FILES		= $(PACKRAT_FILES:%=$(PACKRAT_DIR)/%) \
 			$(WRAPPER_FILES:%=$(WRAPPER_DIR)/%) \
+			$(PRINTING_FILES:%=$(PRINTING_DIR)/%) \
 			$(SRC_FILES:%=$(SRC_DIR)/%)
 
 CPP_FILES	= $(FILES:%=%.cpp)
@@ -71,7 +74,7 @@ $(DOC_DIR)/%.pdf: $(DOC_DIR)
 $(OBJ_DIR)/%.o: | $(OBJ_DIR)
 	$(CXX) $(CXX_FLAGS) -c -o $@ $(call LOOKUP,$(*F))
 
-# giving up and LaTeX has no mahic
+# giving up and LaTeX has no magic
 $(DOC_DIR)/PackratParser.tex : $(TEX_DIR)/PackratParser.tex $(TEX_DIR)/PackratParser/usingAST.tex
 $(DOC_DIR)/PStandard.tex : $(TEX_DIR)/PStandard.tex $(TEX_DIR)/PStandard/operation.tex $(TEX_DIR)/PStandard/scope.tex $(TEX_DIR)/PStandard/terms.tex
 $(DOC_DIR)/Thoughts.tex : $(TEX_DIR)/Thoughts.tex $(TEX_DIR)/Thoughts/introduction.tex $(TEX_DIR)/Thoughts/optimizations.tex $(TEX_DIR)/Thoughts/semantics.tex

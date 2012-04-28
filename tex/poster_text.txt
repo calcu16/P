@@ -1,0 +1,86 @@
+Abstract
+--------
+When first learning standard imperative programming languages, novice 
+programmers often spend much of their time debugging errors due to 
+aliasing and misunderstanding of side effects. Languages like C require 
+both programmer knowledge and complex compilation to support the 
+responsible use of side effects. This semester, the P Project team worked 
+on developing P, a language meant to resemble C but with consistent 
+deep-copying of objects. The goal of this language is to provide a usable 
+C-like language with good functionality and succinctness while prohibiting 
+aliasing. To counteract the resulting runtime cost of deep-copying, the 
+researchers hope to show the ease of applying memory optimizations to 
+speed up nonaliasing programs. A minimal working compiler with some 
+starting optimizations is presented, along with ideas for possible future 
+restructuring and optimization.
+
+Problem Statement
+-----------------
+This research was aimed to address the problem of aliasing in standard 
+imperative programming languages, wherein multiple pointers can point to 
+the same object and ultimately cause unexpected side effects after data 
+was supposedly "copied". The researchers aimed to create a C-like 
+programming language named P which automatically makes new copies of data 
+in memory such that aliasing is impossible. This language, compiled to C++,
+should be easy to use for a C programming and produce code output only 
+minimally longer for standard operations and data structures than 
+functionally identical programs written in C.
+
+Variable Passing
+----------------
+In order to avoid ambiguity in the method of write-back in arguments of 
+functions, we chose to modify the conventions of argument and output 
+variables from those generally used in C. Here, any input variable 
+actually to be read by the function is given as a const variable. This 
+constraint allows us to avoid the problem of determining what happens 
+after an inputted variable passed by reference is altered (which would, by 
+the conventions of our language, require a new instance of that object to 
+be created). Additionally, we use call-by-result conventions to pass out 
+returned values of the function, so non-const variables are not actually 
+read but instead simply overwritten and replaced by the function. The 
+function may also have a single return type besides void, but any other 
+returns are allocated as non-const arguments to the function.
+
+Compilation Process
+-------------------
+The complilation process is relatively simple. First, we read in valid 
+P code in with a P abstract syntax modelled very much after C's abstract 
+syntax. Then, statements are converted with three primary rules:
+
+1. Pointers are converted to FatPointers, a class created to wrap pointers 
+with additional wrapper data for garbage collection and overloaded copying 
+for the purposes of deeper copying.
+2. Function declarations are reconstructed using newly-defined structs for 
+return values, which combine the by-result outputs and the function type 
+itself into a single struct. Each function's type becomes that of the 
+return struct generated for the given function.
+3. Assignment statements using these functions are rewritten to 
+appropriately access data members of the generated return structs.
+
+These changes occur in the conversion from the P abstract syntax to a C++ 
+abstract syntax, which is then converted to code and compiled using some 
+preexisting C++ compiler.
+
+Future Work
+-----------
+At present, while assignment operations behave appropriately, copy 
+constructors still do not behave appropriately for our code and can cause 
+severe errors. Currently, to avoid this problem, we rewrite copying code 
+to use the assignment operator instead, but a more elegant solution would 
+be ideal.
+
+Part of the perceived advantage of removing aliasing is that it allows 
+the compiler to optimize via reordering operations where usual side-effect-
+prone code would constrain the compiler. We would like, for instance, for 
+the compiler to automatically use blocking and sequencing of operations in 
+for loops to maximize cache usage and software pipelining.
+
+Acknowledgments
+---------------
+
+Thanks to Professor Chris Stone for advising our research and reviewing 
+our work.
+
+Additional thanks to the CS department for supplying machines and 
+resources for our work.
+

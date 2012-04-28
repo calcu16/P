@@ -29,37 +29,64 @@ const Parser& Parser::getPParser()
             "RBRACK",       "\\}{SEP}",
             "LPAREN",       "\\({SEP}",
             "RPAREN",       "\\){SEP}",
-            "SEMICOLON",    ";{SEP}|{SEP}#1<error=Missing_Semicolon>",
+            "SEMICOLON",    ";{SEP}",
+            "COMMA",        ",{SEP}",
             "ASSIGN",       "={SEP}",
             /** Values **/
-            "IDENT",        "<type=ident>!({KEYWORD}|[0-9])"
+            "IDENT",        "<type=Ident>!({KEYWORD}|[0-9])"
                             "<value:[a-zA-Z0-9]+_>{SEP}",
             "INT",          "<type=int><value:"
                             "(0[xX][0-9a-fA-F]+_|[0-7]+_|!0[0-9]+_)>{SEP}",
             "CONSTANT",     "{INT}",
             /* Parser */
-            "atom",         "{IDENT}|{CONSTANT}|{LPAREN}{expr}{RPAREN}",
-            "unary",        "<type=unary><op:UN_OP><value:{unary}>",
-            "sum",          "<type=sum><value:{atom}:(<op:{ADD_OP}>{atom})*>",
-            "assign",       "<type=assign><value:{sum}:"
-                            "(<op:{ASSIGN}><rhs:{sum}>)*>",
-            "expr",         "<type=expr><value:{assign}:(,{assign})*>",
-            "typename",     "<type=typename>(<name:{IDENT}>|{VOID}<name:void>)",
-            "var_dec",      "<type=var_dec><var_type:{typename}><value:{expr}>",
-            "return",       "<type=return>{RETURN}<value:{expr}>",
-            "statement",    "{var_dec}{SEMICOLON}|{return}{SEMICOLON}"
-                            "|{expr}{SEMICOLON}|{select}|{compound}",
-            "compounded",   "{RBRACK}|<value:{statement}><next:{compounded}>",
-            "compound",     "<type=compound>{LBRACK}<value:{compounded}>",
-            "select",       "<type=if>{IF}LPAREN<cond:{expr}>{RPAREN}"
-                            "<if:{statement}>({ELSE}<else:{statement}>)?",
-            "args",         "{LPAREN}<arglist:(<typename:{typename}>"
-                            "<argname:{IDENT}>?):(<typename:{typename}>"
-                            "<argname:{IDENT}>?)*>?{RPAREN}",
-            "function",     "<return_type:{typename}><fname:{IDENT}>"
-                            "<arg:{args}>(<type=function>"
-                            "<value:{compound}>|<type=fdec>{SEMICOLON})",
-            "program",      "!|<type=program>{SEP}<value:{function}><next:{program}>"
+            "typename",     "<type=Simple><value:{IDENT}|{VOID}>",
+            "atom",         "{LPAREN}{expression}{RPAREN}|"
+                            "<type=Ident><value:{IDENT}>",
+            "args",         "{ignore_comma}:({COMMA}{ignore_comma})*|",
+            "call",         "<type=Call><value:"
+                                "<Function:{IDENT}>"
+                                "{LPAREN}"
+                                    "<Arguments:<value:{args}>>"
+                                "{RPAREN}"
+                            ">",
+            "maybe_call",   "{call}|{atom}",
+            "unary",        "<type=UnaryExpr><value:"
+                                "<Op:[-~!&*]>{SEP}<Expression:{maybe_unary}>"
+                            ">",
+            "maybe_unary",  "{unary}|{maybe_call}",
+            "prod",         "<type=BinaryExpr><value:"
+                                "<Value:{maybe_unary}>"
+                                ":(<Op:<value:[*/]>>{SEP}<Value:{maybe_unary}>)+"
+                            ">",
+            "maybe_prod",   "{prod}|{maybe_unary}",
+            "sum",          "<type=BinaryExpr><value:"
+                                "<Value:{maybe_prod}>"
+                                ":(<Op:<value:[+-]>>{SEP}<Value:<value:{maybe_prod}>>)+"
+                            ">",
+            "maybe_sum",    "{sum}|{maybe_prod}",
+            "assign",       "<type=BinaryExpr><value:"
+                                "<Value:<value:{maybe_sum}>>"
+                                ":(<Op:<value:[=]>>{SEP}<Value:<value:{maybe_assign}>>)"
+                            ">",
+            "maybe_assign", "{assign}|{maybe_sum}",
+            "ignore_comma", "{maybe_assign}",
+            "expression",   "{maybe_assign}",
+            "statement",    "<value:"
+                                "(<type=Simple><value:{expression}>{SEMICOLON})|"
+                                "(<type=Return>{RETURN}<value:{expression}>{SEMICOLON})|"
+                                "(<type=Block><value:{block}>)"
+                            ">",
+            "block",        "{LBRACK}<value:{statement}*>{RBRACK}",
+            "type",         "<value:(<type=Simple><value:{IDENT}>)>",
+            "parameter",    "<value:<Type:{type}><Name:{IDENT}>>",
+            "parameters",   "{LPAREN}<value:({parameter}:({COMMA}{parameter})*)|>{RPAREN}",
+            "function",     "<value:"
+                                "<ReturnType:<value:{typename}>>"
+                                "<Name:{IDENT}>"
+                                "<Pars:{parameters}>"
+                                "<Block:{block}>"
+                            ">",
+            "program",      "{SEP}<value:{function}*>!"
         );
     return *PParser;
 }

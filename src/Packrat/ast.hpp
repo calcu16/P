@@ -126,6 +126,8 @@ typedef Iterator iterator;
          * looks up numerically a particular index into
          * this AST
          */
+        AST& operator[](int);
+        const AST& operator[](int) const;
         AST& operator[](size_t);
         const AST& operator[](size_t) const;
         size_t length() const;
@@ -166,7 +168,6 @@ typedef Iterator iterator;
         std::ostream& print(std::ostream&) const;
     private:
         std::ostream& print(std::ostream&,std::string) const;
-
     };
 }
 /*
