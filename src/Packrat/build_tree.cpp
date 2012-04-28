@@ -16,6 +16,18 @@ BuildTree<int>::BuildTree(const AST& tree)
         t_ = NULL;
 }
 
+template<>
+BuildTree<unsigned long long int>::BuildTree(const AST& tree)
+{
+    if(*tree["value"]["type"] == "int")
+    {
+        t_ = new unsigned long long int();
+        std::istringstream(*tree["value"]["value"]) >> *t_;
+    }
+    else
+        t_ = NULL;
+}
+
 #include <iostream>
 template<>
 BuildTree<string>::BuildTree(const AST& tree)

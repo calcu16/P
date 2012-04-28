@@ -200,6 +200,9 @@ template<>
 BuildTree<int>::BuildTree(const AST& tree);
 
 template<>
+BuildTree<unsigned long long int>::BuildTree(const AST& tree);
+
+template<>
 BuildTree<std::string>::BuildTree(const AST& tree);
 
 /* List tree constructor */
@@ -239,8 +242,9 @@ template<size_t I, typename... US>
 BuildTree<wrapper::Union<TS...> >::BuildUnion<I, US...>::BuildUnion
     (const AST& tree, name_t names, T& result)
 {
-    typedef typename wrapper::type<I-1, US...>::value type;
-    // std::cout << "Comparing '" << names[I-1] << "' with '" << *tree["type"] << "'." << std::endl;
+    typedef typename wrapper::type<I-1, US...>::value type;/*
+    std::cout << "Looking at " << I-1 << std::endl;
+    std::cout << "Comparing '" << names[I-1] << "' with '" << *tree["type"] << "'." << std::endl;*/
     if(*tree["type"] == names[I-1])
         result.template set<I-1>(buildTree<type>(tree));
     else
@@ -296,6 +300,27 @@ BuildTree<fold_left_t<S, R, SEP> >::BuildTree(const AST& tree, name_t names)
     for(++i; i != tree.end(); ++i)
     {
         r_ = new std::tuple<R,SEP,R>(left, buildTree<SEP>((*i)[sep]), buildTree<R>((*i)[value]));
+        S holder;
+        holder.value_ = *r_;
+        left = (R)holder;
+    }
+}
+
+/* postfix tree constructor */
+template<typename S, typename R, typename OP>
+BuildTree<postfix_t<S, R, OP> >::BuildTree(const AST& tree, name_t names)
+    : r_(NULL)
+{
+    // Sets up iterator for loop to construct fold_left structure
+    AST::const_iterator i = tree.begin();
+    std::string value = names[0], op = names[1];
+    // Make the first element in the innermost level
+    R left = buildTree<S>((*i)[value]);
+
+    // Make a tuple containing the previous tuple and the next level
+    for(++i; i != tree.end(); ++i)
+    {
+        r_ = new std::tuple<S,OP>(left, buildTree<OP>((*i)[op]));
         S holder;
         holder.value_ = *r_;
         left = (R)holder;

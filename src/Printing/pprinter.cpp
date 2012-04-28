@@ -1,22 +1,22 @@
 #include "pprinter.hpp"
 #include "../Packrat/pst.hpp"
+#include "../Wrapper/oindentstream.hpp"
 #include <iostream>
 #include <tuple>
 
 using namespace packrat;
 using namespace pst;
-static ostream& operator<<(ostream&, const Statement&);
-static ostream& operator<<(ostream&, const Expression&);
-bool IS_NEWLINE = true;
-int INDENT_NO = 0;
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream&, const Statement&);
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream&, const Expression&);
 
-static ostream& operator<<(ostream& out, const Type& type)
+
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Type& type)
 {
     assert((int)type.value_ != -1);
     switch(type.value_)
     {
     case Type::TYPENAME:
-        indentedOutput(out, type.value_.get<Type::TYPENAME>());
+        out << type.value_.get<Type::TYPENAME>();
         break;
     default:
         assert(0);
@@ -24,7 +24,7 @@ static ostream& operator<<(ostream& out, const Type& type)
     return out;
 }
 
-static ostream& operator<<(ostream& out, const BinOp& op)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const BinOp& op)
 {
     switch(op.value_)
     {
@@ -39,7 +39,27 @@ static ostream& operator<<(ostream& out, const BinOp& op)
     }
 }
 
-static ostream& operator<<(ostream& out, const Arguments& arguments)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const UnaryOp& op)
+{
+    switch(op.value_)
+    {
+    case UnaryOp::NEGATE:
+        return out << " - ";
+    case UnaryOp::COMPLEMENT:
+        return out << " ~ ";
+    case UnaryOp::NOT:
+        return out << " ! ";
+    case UnaryOp::REFERENCE:
+        return out << " & ";
+    case UnaryOp::DEREFERENCE:
+        return out << " * ";
+    default:
+        assert(0);
+    }
+}
+
+
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Arguments& arguments)
 {
     out << "(";
     for(Arguments::const_iterator i = arguments.begin(); i != arguments.end(); )
@@ -49,37 +69,47 @@ static ostream& operator<<(ostream& out, const Arguments& arguments)
             out << ",";
     }
     out << ")";
+    return out;
 }
 
-static ostream& operator<<(ostream& out, const Call& call)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Call& call)
 {
     return out  << get<Call::IDENTIFIER>(call.value_)
                 << get<Call::ARGUMENTS>(call.value_);
 }
 
-static ostream& operator<<(ostream& out, const BinaryExpression& bexpr)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const UnaryExpression& bexpr)
 {
-    return out  << get<BinaryExpression::LHS>(bexpr.value_)
-                << get<BinaryExpression::OP >(bexpr.value_)
-                << get<BinaryExpression::RHS>(bexpr.value_);
+    return out  << "(" << get<UnaryExpression::OP>(bexpr.value_)
+                << get<UnaryExpression::VALUE>(bexpr.value_) << ")";
 }
 
-static ostream& operator<<(ostream& out, const Expression& expr)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const BinaryExpression& bexpr)
+{
+    return out  << "(" << get<BinaryExpression::LHS>(bexpr.value_)
+                << get<BinaryExpression::OP >(bexpr.value_)
+                << get<BinaryExpression::RHS>(bexpr.value_) << ")";
+}
+
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Expression& expr)
 {
     assert((int)expr.value_ != -1);
     switch(expr.value_)
     {
     case Expression::IDENTIFIER:
-        indentedOutput(out, expr.value_.get<Expression::IDENTIFIER>());
+        out << expr.value_.get<Expression::IDENTIFIER>();
+        break;
+    case Expression::INTEGER:
+        out << expr.value_.get<Expression::INTEGER>();
         break;
     case Expression::UNARY:
-        indentedOutput(out, "un");
+        out << expr.value_.get<Expression::UNARY>();
         break;
     case Expression::BINARY:
-        indentedOutput(out, expr.value_.get<Expression::BINARY>());
+        out << expr.value_.get<Expression::BINARY>();
         break;
     case Expression::CALL:
-        indentedOutput(out, expr.value_.get<Expression::CALL>());
+        out << expr.value_.get<Expression::CALL>();
         break;
     default:
         assert(0);
@@ -87,36 +117,69 @@ static ostream& operator<<(ostream& out, const Expression& expr)
     return out;
 }
 
-static ostream& operator<<(ostream& out, const Block& block)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Initializer& init)
 {
-    indentedOutput(out, "{\n");
-    ++INDENT_NO;
-    for(Block::const_iterator i = block.begin(); i != block.end(); ++i) {
-        indentedOutput(out, *i);
-        indentedOutput(out, "\n");
+    return out << get<Initializer::INDENTIFIER>(init.value_)
+               << " = " << get<Initializer::VALUE>(init.value_);
+}
+
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Declaration& decl)
+{
+    switch(decl.value_)
+    {
+    case Declaration::INITIALIZER:
+        out << decl.value_.get<Declaration::INITIALIZER>();
+        break;
+    case Declaration::DEFAULT:
+        out << decl.value_.get<Declaration::DEFAULT>();
+        break;
+    default:
+        assert(0);
     }
-    --INDENT_NO;
-    indentedOutput(out, "}\n");
     return out;
 }
 
-static ostream& operator<<(ostream& out, const Statement& statement)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Declarations& decls)
+{
+    out << get<Declarations::TYPE>(decls.value_) << " ";
+    for(std::list<Declaration>::const_iterator i = get<Declarations::DECLARATIONS>(decls.value_).begin();
+            i != get<Declarations::DECLARATIONS>(decls.value_).end(); )
+    {
+        out << *i;
+        if(++i != get<Declarations::DECLARATIONS>(decls.value_).end())
+            out << ", ";
+    }
+    out << ";";
+    return out;
+}
+
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Block& block)
+{
+    out << "{" << wrapper::endl;
+    ++out;
+    for(Block::const_iterator i = block.begin(); i != block.end(); ++i)
+        out << *i << wrapper::endl;
+    --out;
+    out << "}" << wrapper::endl;
+    return out;
+}
+
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Statement& statement)
 {
     assert((int)statement.value_ != -1);
     switch(statement.value_)
     {
     case Statement::RETURN:
-        indentedOutput(out, "return ");
-        indentedOutput(out, statement.value_.get<Statement::RETURN>());
-        indentedOutput(out, ";");
+        out << "return " << statement.value_.get<Statement::RETURN>() << ";";
         break;
     case Statement::SIMPLE:
-        indentedOutput(out, statement.value_.get<Statement::SIMPLE>());
-        indentedOutput(out, ";");
+        out << statement.value_.get<Statement::SIMPLE>() << ";";
+        break;
+    case Statement::DECLARATIONS:
+        out << statement.value_.get<Statement::DECLARATIONS>();
         break;
     case Statement::BLOCK:
-        indentedOutput(out, statement.value_.get<Statement::BLOCK>());
-        indentedOutput(out, ";");
+        out << statement.value_.get<Statement::BLOCK>();
         break;
     default:
         assert(0);
@@ -124,47 +187,43 @@ static ostream& operator<<(ostream& out, const Statement& statement)
     return out;
 }
 
-static ostream& operator<<(ostream& out, const Parameter& par)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Parameter& par)
 {
-    indentedOutput(out, get<Parameter::TYPE>(par.value_));
-    indentedOutput(out, " ");
-    indentedOutput(out, get<Parameter::NAME>(par.value_));
-    return out;
+    return out  << get<Parameter::TYPE>(par.value_)
+                << " " <<  get<Parameter::NAME>(par.value_);
 }
 
-static ostream& operator<<(ostream& out, const Parameters& pars)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Parameters& pars)
 {
     Parameters::const_iterator i = pars.begin();
-    indentedOutput(out, "(");
+    out << "(";
     if(i != pars.end()) for(;;)
     {
-        indentedOutput(out, *i);
+        out << *i;
         if(++i == pars.end())
             break;
-        indentedOutput(out, ", ");
+        out << ", ";
     }
-    indentedOutput(out, ")");
+    out << ")";
     return out;
 }
 
-static ostream& operator<<(ostream& out, const Function& func)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Function& func)
 {
-    indentedOutput(out, get<Function::RETURN_TYPE>(func.value_));
-    indentedOutput(out, " ");
-    indentedOutput(out, get<Function::NAME>(func.value_));
-    indentedOutput(out, get<Function::PARAMETERS>(func.value_));
-    indentedOutput(out, "\n");
-    indentedOutput(out, get<Function::BODY>(func.value_));
+    out << get<Function::RETURN_TYPE>(func.value_)
+        << " "
+        << get<Function::NAME>(func.value_)
+        << get<Function::PARAMETERS>(func.value_)
+        << wrapper::endl
+        << get<Function::BODY>(func.value_);
     return out;
 }
 
 ostream& operator<<(ostream& out, const Program& program)
 {
+    wrapper::oIndentStream wrap(out);
     for(list<Function>::const_iterator i = program.begin(); i != program.end(); ++i)
-    {
-        indentedOutput(out, *i);
-        indentedOutput(out, "\n");
-    }
+        wrap << *i << wrapper::endl;
     return out;
 }
 

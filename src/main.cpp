@@ -21,6 +21,8 @@ const string program =
 ""
 "int main()"
 "{"
+"   int a = 0, *b, c = d;"
+"   c = -a;"
 "   return foo(a,b);"
 "}"
 ;

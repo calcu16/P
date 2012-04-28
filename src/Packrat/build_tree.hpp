@@ -25,6 +25,9 @@ namespace packrat
     template<typename S, typename R, typename SEP>
     struct fold_left_t {};
     
+    template<typename S, typename R, typename OP>
+    struct postfix_t {};
+    
     /*
      * BuildTrees are wrappers for things built from abstract syntax 
      *   trees. These are intended for the creation of new syntax trees.
@@ -152,6 +155,29 @@ namespace packrat
         typedef fold_left_t<S, R, SEP> T;
         typedef std::tuple<R, SEP, R> return_t;
         static const size_t size = 2; // fold lefts are layered with size 2 per level
+        typedef typename table_t<size>::type name_t;
+        
+        return_t* r_;
+        template<size_t I>
+        static return_t makeTree(const AST&, typename table_t<I>::type);
+        
+        BuildTree(const AST&, name_t);
+        
+        ~BuildTree();
+        void swap(BuildTree<T>&);
+        BuildTree<T>& operator=(BuildTree<T>);
+        
+        return_t& operator*();
+        const return_t& operator*() const;
+    };
+    
+    /* Specifictions for a postfix operator */
+    template<typename S, typename R, typename OP>
+    struct BuildTree<postfix_t<S, R, OP> >
+    {
+        typedef postfix_t<S, R, OP> T;
+        typedef std::tuple<R, OP> return_t;
+        static const size_t size = 2; // requires to names for postfix operator
         typedef typename table_t<size>::type name_t;
         
         return_t* r_;

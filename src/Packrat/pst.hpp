@@ -18,7 +18,9 @@ namespace packrat
         struct Expression;
         struct BinaryExpression;
         struct UnaryExpression;
+        struct Statement;
         struct Call;
+        struct ForLoop;
         
         struct Type
         {
@@ -46,7 +48,7 @@ namespace packrat
         struct BinOp
         {
             typedef int type;
-            enum op_t { ASSIGN, PLUS, MINUS };
+            enum op_t { ASSIGN, PLUS, MINUS, TIMES, DIVIDE };
             static const int names_l = 5;
             typedef table_t<names_l>::type names_t;
             static names_t names;
@@ -56,12 +58,13 @@ namespace packrat
         
         struct Expression
         {
-            enum expression_t { IDENTIFIER, UNARY, BINARY, CALL };
+            enum expression_t { IDENTIFIER, INTEGER, UNARY, BINARY, CALL };
             typedef wrapper::Union<Identifier,
+                                   unsigned long long int,
                                    UnaryExpression,
                                    BinaryExpression,
                                    Call> type;
-            static const int names_l = 4;
+            static const int names_l = 5;
             typedef table_t<names_l>::type names_t;
             static names_t names;
             type value_;
@@ -91,9 +94,9 @@ namespace packrat
             
             operator Expression() const;
         };
-        
         struct UnaryExpression
         {
+            enum binary_expression_t { OP, VALUE };
             typedef std::tuple<UnaryOp, Expression> type;
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
@@ -101,17 +104,60 @@ namespace packrat
             std::tuple<UnaryOp, Expression> value_;
         };
         
-        struct Statement;
+        
+        
+        struct Initializer
+        {
+            enum declaration_t { INDENTIFIER, VALUE };
+            typedef std::tuple<Expression, Expression> type;
+            static const int names_l = 2;
+            typedef table_t<names_l>::type names_t;
+            static names_t names;
+            type value_;
+        };
+        
+        struct Declaration
+        {
+            enum declaration_t { INITIALIZER, DEFAULT };
+            typedef wrapper::Union<Initializer, Expression> type;
+            static const int names_l = 2;
+            typedef table_t<names_l>::type names_t;
+            static names_t names;
+            type value_;
+        };
+        
+        struct Declarations
+        {
+            enum declarations_t { TYPE, DECLARATIONS };
+            typedef std::tuple<Type, std::list<Declaration> > type;
+            static const int names_l = 2;
+            typedef table_t<names_l>::type names_t;
+            static names_t names;
+            type value_;
+        };
+        
         typedef std::list<Statement> Block;
         
         struct Statement
         {
-            enum statement_t { SIMPLE, RETURN, BLOCK};
-            static const int names_l = 3;
+            enum statement_t { SIMPLE, RETURN, DECLARATIONS, FOR, BLOCK};
+            static const int names_l = 5;
             typedef table_t<names_l>::type names_t;
             typedef wrapper::Union<Expression,
                                    Expression,
+                                   Declarations,
+                                   ForLoop,
                                    Block> type;
+            static names_t names;
+            type value_;
+        };
+        
+        struct ForLoop
+        {
+            enum forloop_t { INIT, COND, INC, BODY };
+            typedef std::tuple<Expression, Expression, Expression, Statement> type;
+            static const int names_l = 4;
+            typedef table_t<names_l>::type names_t;
             static names_t names;
             type value_;
         };
