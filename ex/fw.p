@@ -1,10 +1,11 @@
-void fw(int** const in, int length, int** out) {
-
+void fw(const int** in, const int length, int** out)
+{
+    int i,j,k;
     out = in;
-
-    for(int i = 0; i < length; i++)
-        for(int j = 0; j < length; j++)
-            for(int k = 0; k < length; k++)
-                if (out[i][k]+out[k][j] < out[i][j])
-                    out[i][j] = out[i][k]+out[k][j];
+    for(j = 0; j < length; j = j + 1)
+        for(i = 0; i < length; i = i + 1)
+            for(k = 0; k < length; k = k + 1)
+                if(out[i][j] + out[j][k] < out[i][k])
+                    out[i][k] = out[i][j]+out[j][k];
 }
+
