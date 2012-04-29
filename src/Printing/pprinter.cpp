@@ -12,11 +12,15 @@ using namespace pst;
 static const string* CURRENT_TYPE = NULL;
 static bool REFERENCE = false;
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream&, const Statement&);
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream&, const Expression&);
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream&, const Statement&);
+
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream&, const Expression&);
 
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Type& type)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Type& type)
 {
     assert((int)type.value_ != -1);
     switch(type.value_)
@@ -30,7 +34,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Typ
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const BinOp& op)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const BinOp& op)
 {
     switch(op.value_)
     {
@@ -61,7 +66,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Bin
     }
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const UnaryOp& op)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const UnaryOp& op)
 {
     switch(op.value_)
     {
@@ -81,7 +87,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Una
 }
 
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Arguments& arguments)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Arguments& arguments)
 {
     out << "(";
     for(Arguments::const_iterator i = arguments.begin(); i != arguments.end(); )
@@ -95,13 +102,15 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Arg
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Call& call)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Call& call)
 {
     return out  << get<Call::IDENTIFIER>(call.value_)
                 << get<Call::ARGUMENTS>(call.value_);
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const UnaryExpression& uexpr)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const UnaryExpression& uexpr)
 {
     if(CURRENT_TYPE == NULL)
     {
@@ -110,13 +119,15 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Una
         if(nprec < cprec)
             out << "(";
         *out = nprec;
-        out << get<UnaryExpression::OP>(uexpr.value_) << get<UnaryExpression::VALUE>(uexpr.value_);
+        out << get<UnaryExpression::OP>(uexpr.value_)
+            << get<UnaryExpression::VALUE>(uexpr.value_);
         if(nprec < cprec)
             out << ")";
         return out;
     } else {
-        assert(get<UnaryExpression::OP>(uexpr.value_).value_ == UnaryOp::DEREFERENCE);
-        string builder = "DeepPointer<" + *CURRENT_TYPE + " >";
+        assert(get<UnaryExpression::OP>(uexpr.value_).value_
+            == UnaryOp::DEREFERENCE);
+        string builder = "FatPointer<" + *CURRENT_TYPE + " >";
         delete CURRENT_TYPE;
         CURRENT_TYPE = new string(builder);
         out << get<UnaryExpression::VALUE>(uexpr.value_);
@@ -124,7 +135,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Una
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const BinaryExpression& bexpr)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const BinaryExpression& bexpr)
 {
     int op    = get<BinaryExpression::OP >(bexpr.value_).value_,
         nprec = BinOp::prec[op],
@@ -141,7 +153,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Bin
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Index& index)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Index& index)
 {
     *out = Index::prec;
     
@@ -149,7 +162,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Ind
                 << "[" << get<Index::INDEX>(index.value_) << "]";
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Expression& expr)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Expression& expr)
 {
     assert((int)expr.value_ != -1);
     switch(expr.value_)
@@ -182,7 +196,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Exp
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Initializer& init)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Initializer& init)
 {
     const string* last = CURRENT_TYPE;
     CURRENT_TYPE = new string(*last);
@@ -194,7 +209,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Ini
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Declaration& decl)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Declaration& decl)
 {
     switch(decl.value_)
     {
@@ -210,11 +226,14 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Dec
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Declarations& decls)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Declarations& decls)
 {
-    CURRENT_TYPE = &get<Declarations::TYPE>(decls.value_).value_.get<Type::TYPENAME>();
+    CURRENT_TYPE = &get<Declarations::TYPE>(decls.value_)
+                        .value_.get<Type::TYPENAME>();
     // out << get<Declarations::TYPE>(decls.value_) << " ";
-    for(std::list<Declaration>::const_iterator i = get<Declarations::DECLARATIONS>(decls.value_).begin();
+    for(std::list<Declaration>::const_iterator i
+            = get<Declarations::DECLARATIONS>(decls.value_).begin();
             i != get<Declarations::DECLARATIONS>(decls.value_).end(); )
     {
         out << *i;
@@ -227,7 +246,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Dec
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Block& block)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Block& block)
 {
     out << "{" << wrapper::endl;
     ++out;
@@ -238,7 +258,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Blo
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const ForLoop& forLoop)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const ForLoop& forLoop)
 {
     out << "for("   << get<ForLoop::INIT>(forLoop.value_);
     *out = 0;
@@ -250,7 +271,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const For
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const If& ifs)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const If& ifs)
 {
     out << "if("   << get<If::COND>(ifs.value_);
     out << ")"      << wrapper::endl;
@@ -258,7 +280,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const If&
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Statement& statement)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Statement& statement)
 {
     assert((int)statement.value_ != -1);
     *out = 0;
@@ -288,12 +311,14 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Sta
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Parameter& par)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Parameter& par)
 {
     // if(get<Parameter::CONST>(par.value_))
     //    out << "const ";
     REFERENCE = !get<Parameter::CONST>(par.value_);
-    CURRENT_TYPE = &get<Parameter::TYPE>(par.value_).value_.get<Type::TYPENAME>();
+    CURRENT_TYPE = &get<Parameter::TYPE>(par.value_)
+                        .value_.get<Type::TYPENAME>();
     out << get<Parameter::NAME>(par.value_);
     REFERENCE = false;
     CURRENT_TYPE = NULL;
@@ -302,7 +327,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Par
     //            << " " <<  get<Parameter::NAME>(par.value_);
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Parameters& pars)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Parameters& pars)
 {
     Parameters::const_iterator i = pars.begin();
     out << "(";
@@ -317,7 +343,8 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Par
     return out;
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Function& func)
+static wrapper::oIndentStream&
+operator<<(wrapper::oIndentStream& out, const Function& func)
 {
     out << get<Function::RETURN_TYPE>(func.value_)
         << " "
@@ -328,11 +355,13 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Fun
     return out;
 }
 
-ostream& operator<<(ostream& out, const Program& program)
+ostream&
+operator<<(ostream& out, const Program& program)
 {
     CURRENT_TYPE = NULL;
     wrapper::oIndentStream wrap(out);
-    for(list<Function>::const_iterator i = program.begin(); i != program.end(); ++i)
+    for(list<Function>::const_iterator i = program.begin();
+            i != program.end(); ++i)
         wrap << *i << wrapper::endl;
     return out;
 }

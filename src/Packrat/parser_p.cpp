@@ -62,17 +62,19 @@ const Parser& Parser::getPParser()
                             ">",
             "maybe_index",  "<value:{index}>|{maybe_call}",
             "unary",        "<type=UnaryExpr><value:"
-                                "<Op:<value:[-~!&*]>>{SEP}<Expression:{maybe_unary}>"
+                                "<Op:<value:[-~!&*]>>{SEP}"
+                                    "<Expression:{maybe_unary}>"
                             ">",
             "maybe_unary",  "<value:{unary}>|{maybe_index}",
             "prod",         "<type=BinaryExpr><value:"
-                                "<Value:{maybe_unary}>"
-                                ":(<Op:<value:[*/]>>{SEP}<Value:{maybe_unary}>)+"
+                                "<Value:{maybe_unary}>:"
+                                "(<Op:<value:[*/%]>>{SEP}"
+                                    "<Value:{maybe_unary}>)+"
                             ">",
             "maybe_prod",   "<value:{prod}>|{maybe_unary}",
             "sum",          "<type=BinaryExpr><value:"
-                                "<Value:{maybe_prod}>"
-                                ":(<Op:<value:[+-]>>{SEP}<Value:{maybe_prod}>)+"
+                                "<Value:{maybe_prod}>:"
+                                "(<Op:<value:[+-]>>{SEP}<Value:{maybe_prod}>)+"
                             ">",
             "maybe_sum",    "<value:{sum}>|{maybe_prod}",
             "rel",          "<type=BinaryExpr><value:"
@@ -81,8 +83,8 @@ const Parser& Parser::getPParser()
                             ">",
             "maybe_rel",    "<value:{rel}>|{maybe_sum}",
             "assign",       "<type=BinaryExpr><value:"
-                                "<Value:{maybe_rel}>"
-                                ":(<Op:<value:[=]>>{SEP}<Value:{maybe_assign}>)"
+                                "<Value:{maybe_rel}>:"
+                                "(<Op:<value:[=]>>{SEP}<Value:{maybe_assign}>)"
                             ">",
             "maybe_assign", "<value:{assign}>|{maybe_rel}",
             "ignore_comma", "{maybe_assign}",
@@ -96,8 +98,9 @@ const Parser& Parser::getPParser()
                                 "(<type=Init>{initializer})"
                                 "|(<type=Default>{ignore_comma})"
                             ">",
-            "declarations", "<Type:<value:{typename}>>"
-                                "<Decls:<value:{declaration}:({COMMA}{declaration})*>>",
+            "decls",        "<Type:<value:{typename}>>"
+                                "<Decls:<value:{declaration}:"
+                                    "({COMMA}{declaration})*>>",
             "for_loop",     "{FOR}{LPAREN}"
                                 "<Init:{expression}>{SEMICOLON}"
                                 "<Cond:{expression}>{SEMICOLON}"
@@ -107,8 +110,8 @@ const Parser& Parser::getPParser()
                                 "<Body:{statement}>",
             "statement",    "<value:"
                                 "(<type=Simple>{expression}{SEMICOLON})|"
-                                "(<type=Declarations><value:{declarations}>{SEMICOLON})|"
-                                "(<type=Return>{RETURN}{expression}{SEMICOLON})|"
+                                "(<type=Decls><value:{decls}>{SEMICOLON})|"
+                                "(<type=Ret>{RETURN}{expression}{SEMICOLON})|"
                                 "(<type=For><value:{for_loop}>)|"
                                 "(<type=If><value:{if}>)|"
                                 "(<type=Block>{block})"
@@ -118,7 +121,9 @@ const Parser& Parser::getPParser()
                                 "<Const:<value:{CONST}?>>"
                                 "<Type:<value:{typename}>><Name:{expression}>"
                             ">",
-            "parameters",   "{LPAREN}<value:({parameter}:({COMMA}{parameter})*)|>{RPAREN}",
+            "parameters",   "{LPAREN}"
+                                "<value:({parameter}:({COMMA}{parameter})*)|>"
+                            "{RPAREN}",
             "function",     "<value:"
                                 "<ReturnType:<value:{typename}>>"
                                 "<Name:{IDENT}>"

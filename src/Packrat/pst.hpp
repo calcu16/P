@@ -53,8 +53,9 @@ namespace packrat
         {
             typedef int type;
             enum op_t { COMMA,
-                        ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN, TIMES_ASSIGN, DIV_ASSIGN, MOD_ASSIGN,
-                        LSHIFT_ASSIGN, RSHIFT_ASSIGN, AND_ASSIGN, XOR_ASSIGN, OR_ASSIGN,
+                        ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN, TIMES_ASSIGN,
+                        DIV_ASSIGN, MOD_ASSIGN, LSHIFT_ASSIGN, RSHIFT_ASSIGN,
+                        AND_ASSIGN, XOR_ASSIGN, OR_ASSIGN,
                         LOR, LAND, OR, XOR, AND,
                         EQ, NEQ, LT, LEQ, GT, GEQ,
                         LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MOD };
@@ -74,7 +75,8 @@ namespace packrat
         
         struct Expression
         {
-            enum expression_t { IDENTIFIER, INTEGER, UNARY, BINARY, CALL, INDEX };
+            enum expression_t { IDENTIFIER, INTEGER, UNARY,
+                                BINARY, CALL, INDEX };
             typedef wrapper::Union<Identifier,
                                    unsigned long long int,
                                    UnaryExpression,
@@ -187,7 +189,8 @@ namespace packrat
         struct ForLoop
         {
             enum forloop_t { INIT, COND, INC, BODY };
-            typedef std::tuple<Expression, Expression, Expression, Statement> type;
+            typedef std::tuple<Expression, Expression,
+                               Expression, Statement > type;
             static const int names_l = 4;
             typedef table_t<names_l>::type names_t;
             static names_t names;

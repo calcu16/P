@@ -45,7 +45,7 @@ namespace packrat
         BuildTree(const AST&); // function to build a tree from an abstract 
                                //   syntax tree
     
-        /* static function to make a tree based upon which item specified by 
+        /* static function to make a tree based upon which item specified by
          * the AST among the values enumerated in the table_t.
          */
         template<size_t I>     
@@ -159,7 +159,8 @@ namespace packrat
     {
         typedef fold_left_t<S, R, SEP> T;
         typedef std::tuple<R, SEP, R> return_t;
-        static const size_t size = 2; // fold lefts are layered with size 2 per level
+        // size of the table for names
+        static const size_t size = 2; 
         typedef typename table_t<size>::type name_t;
         
         return_t* r_;

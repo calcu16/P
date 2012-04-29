@@ -13,24 +13,37 @@ using namespace packrat;
 using namespace packrat::pst;
 using namespace wrapper;
 
-const string program =
-"void fw(const int **in, int length, int **out) {"
-"   int i,j,k;"
-"   out = in;"
-"   for(k = 0; k < length; k = k + 1)"
-"       for(i = 0; i < length; i = i + 1)"
-"           for(j = 0; j < length; j = j + 1)"
-"               if(out[i][j] > out[i][k] + out[k][j])"
-"                   out[i][j] = out[i][k] + out[k][j];"
-"}"
-;
-
-int main(void)
+int main(int argc, char* argv[])
 {
-    AST temp = Parser::getPParser().parse("program",program);
+    if(argc != 3)
+    {
+        cout << argv[0] << " [input] [output]" << endl;
+        return 1;
+    }
+    string input = "";
+    if(string(argv[1]) == "-")
+        input = string(istreambuf_iterator<char>(cin),
+                       istreambuf_iterator<char>());
+    else
+    {
+        ifstream ifs(argv[1]);
+        input = string(istreambuf_iterator<char>(ifs),
+                       istreambuf_iterator<char>());
+    }
+    
+    AST temp = Parser::getPParser().parse("program",input);
     // cout << temp << endl;
-    // cout << "------------------" << endl;
     Program func = buildTree<Program>(temp);
-    cout << func << endl;
+    if(string(argv[2]) == "-")
+    {
+        cout << "#include ../lib/plib.hpp" << endl;
+        cout << func << endl;
+    }
+    else
+    {
+        ofstream ofs(argv[2]);
+        ofs << "#include ../lib/plib.hpp" << endl;
+        ofs << func << endl;
+    }
     return 0;
 }
