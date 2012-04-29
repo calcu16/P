@@ -14,10 +14,15 @@ namespace packrat
     /*
      * "Templated typedef" to define strings as table_ts of size I
      */
+    template<typename T, size_t I>
+    struct array_t {
+        typedef T const type[I];
+    };
     template<size_t I>
     struct table_t {
-        typedef char const * const type[I];
+        typedef typename array_t<const char*,I>::type type;
     };
+    
     
     /*
      * A trait indicating the conversion of a list to a fold-left tree

@@ -9,11 +9,14 @@ namespace wrapper
     class oIndentStream
     {
         size_t indents_;
+        size_t precedent_;
+        std::string holding_;
         std::ostream* wrapped_;
         bool newline_;
     public:
         oIndentStream(std::ostream& wrapped)
-            : indents_  (0), wrapped_(&wrapped), newline_(true) {}
+            : indents_(0), precedent_(0),
+                wrapped_(&wrapped), newline_(true) {}
         
         oIndentStream& operator++()
         {
@@ -27,6 +30,10 @@ namespace wrapper
                 --indents_;
             return *this;
         }
+        
+        size_t& operator*() { return precedent_; }
+        const size_t& operator*() const { return precedent_; }
+        
         oIndentStream& operator<<(const Endl&)
         {
             newline_ = true;

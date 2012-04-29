@@ -17,10 +17,12 @@ namespace packrat
          */
         struct Expression;
         struct BinaryExpression;
+        struct Index;
         struct UnaryExpression;
         struct Statement;
         struct Call;
         struct ForLoop;
+        struct If;
         
         struct Type
         {
@@ -40,7 +42,9 @@ namespace packrat
             typedef int type;
             enum op_t { NEGATE, COMPLEMENT, NOT, REFERENCE, DEREFERENCE };
             static const int names_l = 5;
+            static const int prec = 12;
             typedef table_t<names_l>::type names_t;
+            
             static names_t names;
             type value_;
         };
@@ -48,9 +52,21 @@ namespace packrat
         struct BinOp
         {
             typedef int type;
-            enum op_t { ASSIGN, PLUS, MINUS, TIMES, DIVIDE };
-            static const int names_l = 5;
+            enum op_t { COMMA,
+                        ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN, TIMES_ASSIGN, DIV_ASSIGN, MOD_ASSIGN,
+                        LSHIFT_ASSIGN, RSHIFT_ASSIGN, AND_ASSIGN, XOR_ASSIGN, OR_ASSIGN,
+                        LOR, LAND, OR, XOR, AND,
+                        EQ, NEQ, LT, LEQ, GT, GEQ,
+                        LSHIFT, RSHIFT, PLUS, MINUS, TIMES, DIVIDE, MOD };
+            enum dir_t { L, R };
+            
+            static const int names_l = 31;
             typedef table_t<names_l>::type names_t;
+            typedef array_t<int, names_l>::type prec_t;
+            typedef array_t<dir_t, names_l>::type assoc_t;
+            
+            static prec_t prec;
+            static assoc_t assoc;
             static names_t names;
             type value_;
         };
@@ -58,13 +74,14 @@ namespace packrat
         
         struct Expression
         {
-            enum expression_t { IDENTIFIER, INTEGER, UNARY, BINARY, CALL };
+            enum expression_t { IDENTIFIER, INTEGER, UNARY, BINARY, CALL, INDEX };
             typedef wrapper::Union<Identifier,
                                    unsigned long long int,
                                    UnaryExpression,
                                    BinaryExpression,
-                                   Call> type;
-            static const int names_l = 5;
+                                   Call,
+                                   Index> type;
+            static const int names_l = 6;
             typedef table_t<names_l>::type names_t;
             static names_t names;
             type value_;
@@ -82,6 +99,18 @@ namespace packrat
             type value_;
         };
         
+        struct Index
+        {
+            enum index_t {VALUE, INDEX};
+            typedef postfix_t<Index, Expression, Expression> type;
+            static const int names_l = 2;
+            static const int prec = 13;
+            typedef table_t<names_l>::type names_t;
+            static names_t names;
+            std::tuple<Expression, Expression> value_;
+            
+            operator Expression() const;
+        };
         
         struct BinaryExpression
         {
@@ -140,16 +169,19 @@ namespace packrat
         
         struct Statement
         {
-            enum statement_t { SIMPLE, RETURN, DECLARATIONS, FOR, BLOCK};
-            static const int names_l = 5;
+            enum statement_t { SIMPLE, RETURN, DECLARATIONS, IF, FOR, BLOCK};
+            static const int names_l = 6;
             typedef table_t<names_l>::type names_t;
             typedef wrapper::Union<Expression,
                                    Expression,
                                    Declarations,
+                                   If,
                                    ForLoop,
                                    Block> type;
             static names_t names;
             type value_;
+            
+            operator Block() const;
         };
         
         struct ForLoop
@@ -162,12 +194,23 @@ namespace packrat
             type value_;
         };
         
-        struct Parameter
+        struct If
         {
-            enum parameter_t { TYPE, NAME };
+            enum if_t { COND, BODY };
+            typedef std::tuple<Expression, Statement> type;
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
-            typedef std::tuple<Type, Identifier> type;
+            static names_t names;
+            type value_;
+        };
+        
+        
+        struct Parameter
+        {
+            enum parameter_t { CONST, TYPE, NAME };
+            static const int names_l = 3;
+            typedef table_t<names_l>::type names_t;
+            typedef std::tuple<bool, Type, Expression> type;
             static names_t names;
             type value_;
         };

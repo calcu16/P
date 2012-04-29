@@ -24,17 +24,19 @@ const Parser& Parser::getPParser()
             "RETURN",       "return![a-zA-Z_]{SEP}",
             "FOR",          "for![a-zA-Z_]{SEP}",
             "VOID",         "void![a-zA-Z_]{SEP}",
+            "CONST",        "const![a-zA-Z_]{SEP}",
             "KEYWORD",      "{IF}|{ELSE}|{RETURN}|{VOID}|{FOR}",
             /** Symbols **/
             "LBRACK",       "\\{{SEP}",
             "RBRACK",       "\\}{SEP}",
             "LPAREN",       "\\({SEP}",
             "RPAREN",       "\\){SEP}",
-            "LSQUARE",      "\\({SEP}",
-            "RSQUARE",      "\\){SEP}",
+            "LSQUARE",      "\\[{SEP}",
+            "RSQUARE",      "\\]{SEP}",
             "SEMICOLON",    ";{SEP}",
             "COMMA",        ",{SEP}",
             "ASSIGN",       "={SEP}",
+            "RELOP",        "<value:\\=\\=|\\<\\=|\\!\\=|\\>\\=|\\<|\\>>{SEP}",
             /** Values **/
             "IDENT",        "<type=Ident>!({KEYWORD}|[0-9])"
                             "<value:[a-zA-Z0-9]+_>{SEP}",
@@ -44,66 +46,78 @@ const Parser& Parser::getPParser()
             /* Parser */
             "typename",     "<type=Simple><value:{IDENT}|{VOID}>",
             "atom",         "{LPAREN}{expression}{RPAREN}|"
-                            "<type=Ident><value:{IDENT}>|"
-                            "<type=Int><value:{CONSTANT}>",
+                            "<value:<type=Ident><value:{IDENT}>|"
+                            "<type=Int><value:{CONSTANT}>>",
             "args",         "{ignore_comma}:({COMMA}{ignore_comma})*|",
             "call",         "<type=Call><value:"
                                 "<Function:{IDENT}>"
                                 "{LPAREN}"
-                                    "<Arguments:<value:{args}>>"
+                                    "<Arguments:{args}>"
                                 "{RPAREN}"
                             ">",
-            "maybe_call",   "{call}|{atom}",
+            "maybe_call",   "<value:{call}>|{atom}",
             "index",        "<type=Index><value:"
-                                "<Value:<value:{maybe_call}>>"
-                                "({LSQUARE}<Op:<value:{expression}>>{RSQUARE})+"
+                                "<Value:{maybe_call}>"
+                                "<Index:({LSQUARE}{expression}{RSQUARE})+>"
                             ">",
-            "maybe_index",  "{index}|{maybe_call}",
+            "maybe_index",  "<value:{index}>|{maybe_call}",
             "unary",        "<type=UnaryExpr><value:"
-                                "<Op:<value:[-~!&*]>>{SEP}<Expression:<value:{maybe_unary}>>"
+                                "<Op:<value:[-~!&*]>>{SEP}<Expression:{maybe_unary}>"
                             ">",
-            "maybe_unary",  "{unary}|{maybe_index}",
+            "maybe_unary",  "<value:{unary}>|{maybe_index}",
             "prod",         "<type=BinaryExpr><value:"
-                                "<Value:<value:{maybe_unary}>>"
+                                "<Value:{maybe_unary}>"
                                 ":(<Op:<value:[*/]>>{SEP}<Value:{maybe_unary}>)+"
                             ">",
-            "maybe_prod",   "{prod}|{maybe_unary}",
+            "maybe_prod",   "<value:{prod}>|{maybe_unary}",
             "sum",          "<type=BinaryExpr><value:"
-                                "<Value:<value:{maybe_prod}>>"
-                                ":(<Op:<value:[+-]>>{SEP}<Value:<value:{maybe_prod}>>)+"
+                                "<Value:{maybe_prod}>"
+                                ":(<Op:<value:[+-]>>{SEP}<Value:{maybe_prod}>)+"
                             ">",
-            "maybe_sum",    "{sum}|{maybe_prod}",
+            "maybe_sum",    "<value:{sum}>|{maybe_prod}",
+            "rel",          "<type=BinaryExpr><value:"
+                                "<Value:{maybe_sum}>"
+                                ":(<Op:{RELOP}><Value:{maybe_sum}>)+"
+                            ">",
+            "maybe_rel",    "<value:{rel}>|{maybe_sum}",
             "assign",       "<type=BinaryExpr><value:"
-                                "<Value:<value:{maybe_sum}>>"
-                                ":(<Op:<value:[=]>>{SEP}<Value:<value:{maybe_assign}>>)"
+                                "<Value:{maybe_rel}>"
+                                ":(<Op:<value:[=]>>{SEP}<Value:{maybe_assign}>)"
                             ">",
-            "maybe_assign", "{assign}|{maybe_sum}",
+            "maybe_assign", "<value:{assign}>|{maybe_rel}",
             "ignore_comma", "{maybe_assign}",
             "expression",   "{maybe_assign}",
-            "initializer",  "<Name:<value:{maybe_unary}>>"
-                            "{ASSIGN}"
-                            "<Value:<value:{ignore_comma}>>",
+            "initializer",  "<value:"
+                                "<Name:{maybe_unary}>"
+                                "{ASSIGN}"
+                                "<Value:{ignore_comma}>"
+                            ">",
             "declaration",  "<value:"
-                                "(<type=Init><value:{initializer}>)"
-                                "|(<type=Default><value:{ignore_comma}>)"
+                                "(<type=Init>{initializer})"
+                                "|(<type=Default>{ignore_comma})"
                             ">",
             "declarations", "<Type:<value:{typename}>>"
                                 "<Decls:<value:{declaration}:({COMMA}{declaration})*>>",
             "for_loop",     "{FOR}{LPAREN}"
-                                "<Init:<value:{expression}>>{SEMICOLON}"
-                                "<Cond:<value:{expression}>>{SEMICOLON}"
-                                "<Inc:<value:{expression}>>{RPAREN}"
-                            "<Body:<value:{statement}>>",
+                                "<Init:{expression}>{SEMICOLON}"
+                                "<Cond:{expression}>{SEMICOLON}"
+                                "<Inc:{expression}>{RPAREN}"
+                            "<Body:{statement}>",
+            "if",           "{IF}{LPAREN}<Cond:{expression}>{RPAREN}"
+                                "<Body:{statement}>",
             "statement",    "<value:"
-                                "(<type=Simple><value:{expression}>{SEMICOLON})|"
+                                "(<type=Simple>{expression}{SEMICOLON})|"
                                 "(<type=Declarations><value:{declarations}>{SEMICOLON})|"
-                                "(<type=Return>{RETURN}<value:{expression}>{SEMICOLON})|"
+                                "(<type=Return>{RETURN}{expression}{SEMICOLON})|"
                                 "(<type=For><value:{for_loop}>)|"
-                                "(<type=Block><value:{block}>)"
+                                "(<type=If><value:{if}>)|"
+                                "(<type=Block>{block})"
                             ">",
             "block",        "{LBRACK}<value:{statement}*>{RBRACK}",
-            "type",         "<value:(<type=Simple><value:{IDENT}>)>",
-            "parameter",    "<value:<Type:{type}><Name:{IDENT}>>",
+            "parameter",    "<value:"
+                                "<Const:<value:{CONST}?>>"
+                                "<Type:<value:{typename}>><Name:{expression}>"
+                            ">",
             "parameters",   "{LPAREN}<value:({parameter}:({COMMA}{parameter})*)|>{RPAREN}",
             "function",     "<value:"
                                 "<ReturnType:<value:{typename}>>"

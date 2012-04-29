@@ -1,11 +1,17 @@
 #include "pprinter.hpp"
 #include "../Packrat/pst.hpp"
 #include "../Wrapper/oindentstream.hpp"
+#include <string>
 #include <iostream>
+#include <list>
 #include <tuple>
 
 using namespace packrat;
 using namespace pst;
+
+static const string* CURRENT_TYPE = NULL;
+static bool REFERENCE = false;
+
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream&, const Statement&);
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream&, const Expression&);
 
@@ -34,6 +40,22 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Bin
         return out << " + ";
     case BinOp::MINUS:
         return out << " - ";
+    case BinOp::TIMES:
+        return out << " * ";
+    case BinOp::DIVIDE:
+        return out << " / ";
+    case BinOp::EQ:
+        return out << " == ";
+    case BinOp::NEQ:
+        return out << " != ";
+    case BinOp::GT:
+        return out << " > ";
+    case BinOp::LT:
+        return out << " < ";
+    case BinOp::GEQ:
+        return out << " >= ";
+    case BinOp::LEQ:
+        return out << " <= ";
     default:
         assert(0);
     }
@@ -44,15 +66,15 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Una
     switch(op.value_)
     {
     case UnaryOp::NEGATE:
-        return out << " - ";
+        return out << "-";
     case UnaryOp::COMPLEMENT:
-        return out << " ~ ";
+        return out << "~";
     case UnaryOp::NOT:
-        return out << " ! ";
+        return out << "!";
     case UnaryOp::REFERENCE:
-        return out << " & ";
+        return out << "&";
     case UnaryOp::DEREFERENCE:
-        return out << " * ";
+        return out << "*";
     default:
         assert(0);
     }
@@ -64,6 +86,7 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Arg
     out << "(";
     for(Arguments::const_iterator i = arguments.begin(); i != arguments.end(); )
     {
+        *out = 1;
         out << *i;
         if(++i != arguments.end())
             out << ",";
@@ -78,17 +101,52 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Cal
                 << get<Call::ARGUMENTS>(call.value_);
 }
 
-static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const UnaryExpression& bexpr)
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const UnaryExpression& uexpr)
 {
-    return out  << "(" << get<UnaryExpression::OP>(bexpr.value_)
-                << get<UnaryExpression::VALUE>(bexpr.value_) << ")";
+    if(CURRENT_TYPE == NULL)
+    {
+        int nprec = UnaryOp::prec,
+            cprec = *out;
+        if(nprec < cprec)
+            out << "(";
+        *out = nprec;
+        out << get<UnaryExpression::OP>(uexpr.value_) << get<UnaryExpression::VALUE>(uexpr.value_);
+        if(nprec < cprec)
+            out << ")";
+        return out;
+    } else {
+        assert(get<UnaryExpression::OP>(uexpr.value_).value_ == UnaryOp::DEREFERENCE);
+        string builder = "DeepPointer<" + *CURRENT_TYPE + " >";
+        delete CURRENT_TYPE;
+        CURRENT_TYPE = new string(builder);
+        out << get<UnaryExpression::VALUE>(uexpr.value_);
+    }
+    return out;
 }
 
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const BinaryExpression& bexpr)
 {
-    return out  << "(" << get<BinaryExpression::LHS>(bexpr.value_)
-                << get<BinaryExpression::OP >(bexpr.value_)
-                << get<BinaryExpression::RHS>(bexpr.value_) << ")";
+    int op    = get<BinaryExpression::OP >(bexpr.value_).value_,
+        nprec = BinOp::prec[op],
+        cprec = *out;
+    if(nprec < cprec)
+        out << "(";
+    out << get<BinaryExpression::LHS>(bexpr.value_);
+    *out = nprec + (BinOp::assoc[op] == BinOp::R);
+    out << get<BinaryExpression::OP >(bexpr.value_);
+    *out = nprec + (BinOp::assoc[op] == BinOp::L);
+    out << get<BinaryExpression::RHS>(bexpr.value_);
+    if(nprec < cprec)
+        out << ")";
+    return out;
+}
+
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Index& index)
+{
+    *out = Index::prec;
+    
+    return out  << get<Index::VALUE>(index.value_)
+                << "[" << get<Index::INDEX>(index.value_) << "]";
 }
 
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Expression& expr)
@@ -97,7 +155,11 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Exp
     switch(expr.value_)
     {
     case Expression::IDENTIFIER:
-        out << expr.value_.get<Expression::IDENTIFIER>();
+        if(CURRENT_TYPE != NULL)
+            out << *CURRENT_TYPE << (REFERENCE ? "& " : " ")
+                << expr.value_.get<Expression::IDENTIFIER>();
+        else
+            out << expr.value_.get<Expression::IDENTIFIER>();
         break;
     case Expression::INTEGER:
         out << expr.value_.get<Expression::INTEGER>();
@@ -111,6 +173,9 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Exp
     case Expression::CALL:
         out << expr.value_.get<Expression::CALL>();
         break;
+    case Expression::INDEX:
+        out << expr.value_.get<Expression::INDEX>();
+        break;
     default:
         assert(0);
     }
@@ -119,8 +184,14 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Exp
 
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Initializer& init)
 {
-    return out << get<Initializer::INDENTIFIER>(init.value_)
-               << " = " << get<Initializer::VALUE>(init.value_);
+    const string* last = CURRENT_TYPE;
+    CURRENT_TYPE = new string(*last);
+    out << get<Initializer::INDENTIFIER>(init.value_);
+    delete CURRENT_TYPE;
+    CURRENT_TYPE = NULL;
+    out << " = " << get<Initializer::VALUE>(init.value_);
+    CURRENT_TYPE = last;
+    return out;
 }
 
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Declaration& decl)
@@ -141,15 +212,18 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Dec
 
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Declarations& decls)
 {
-    out << get<Declarations::TYPE>(decls.value_) << " ";
+    CURRENT_TYPE = &get<Declarations::TYPE>(decls.value_).value_.get<Type::TYPENAME>();
+    // out << get<Declarations::TYPE>(decls.value_) << " ";
     for(std::list<Declaration>::const_iterator i = get<Declarations::DECLARATIONS>(decls.value_).begin();
             i != get<Declarations::DECLARATIONS>(decls.value_).end(); )
     {
         out << *i;
         if(++i != get<Declarations::DECLARATIONS>(decls.value_).end())
-            out << ", ";
+            out << ";" << wrapper::endl;
+        //    out << ", ";
     }
-    out << ";";
+    CURRENT_TYPE = NULL;
+    // out << ";";
     return out;
 }
 
@@ -160,13 +234,34 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Blo
     for(Block::const_iterator i = block.begin(); i != block.end(); ++i)
         out << *i << wrapper::endl;
     --out;
-    out << "}" << wrapper::endl;
+    out << "}";
+    return out;
+}
+
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const ForLoop& forLoop)
+{
+    out << "for("   << get<ForLoop::INIT>(forLoop.value_);
+    *out = 0;
+    out << "; "     << get<ForLoop::COND>(forLoop.value_);
+    *out = 0;
+    out << "; "     << get<ForLoop::INC >(forLoop.value_);
+    out << ")"      << wrapper::endl;
+    out << (Block)get<ForLoop::BODY>(forLoop.value_);
+    return out;
+}
+
+static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const If& ifs)
+{
+    out << "if("   << get<If::COND>(ifs.value_);
+    out << ")"      << wrapper::endl;
+    out << (Block)get<If::BODY>(ifs.value_);
     return out;
 }
 
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Statement& statement)
 {
     assert((int)statement.value_ != -1);
+    *out = 0;
     switch(statement.value_)
     {
     case Statement::RETURN:
@@ -176,7 +271,13 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Sta
         out << statement.value_.get<Statement::SIMPLE>() << ";";
         break;
     case Statement::DECLARATIONS:
-        out << statement.value_.get<Statement::DECLARATIONS>();
+        out << statement.value_.get<Statement::DECLARATIONS>() << ";";
+        break;
+    case Statement::FOR:
+        out << statement.value_.get<Statement::FOR>();
+        break;
+    case Statement::IF:
+        out << statement.value_.get<Statement::IF>();
         break;
     case Statement::BLOCK:
         out << statement.value_.get<Statement::BLOCK>();
@@ -189,8 +290,16 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Sta
 
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Parameter& par)
 {
-    return out  << get<Parameter::TYPE>(par.value_)
-                << " " <<  get<Parameter::NAME>(par.value_);
+    // if(get<Parameter::CONST>(par.value_))
+    //    out << "const ";
+    REFERENCE = !get<Parameter::CONST>(par.value_);
+    CURRENT_TYPE = &get<Parameter::TYPE>(par.value_).value_.get<Type::TYPENAME>();
+    out << get<Parameter::NAME>(par.value_);
+    REFERENCE = false;
+    CURRENT_TYPE = NULL;
+    return out;
+    // return out  << get<Parameter::TYPE>(par.value_)
+    //            << " " <<  get<Parameter::NAME>(par.value_);
 }
 
 static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Parameters& pars)
@@ -214,13 +323,14 @@ static wrapper::oIndentStream& operator<<(wrapper::oIndentStream& out, const Fun
         << " "
         << get<Function::NAME>(func.value_)
         << get<Function::PARAMETERS>(func.value_)
-        << wrapper::endl
-        << get<Function::BODY>(func.value_);
+        << wrapper::endl;
+    out << get<Function::BODY>(func.value_);
     return out;
 }
 
 ostream& operator<<(ostream& out, const Program& program)
 {
+    CURRENT_TYPE = NULL;
     wrapper::oIndentStream wrap(out);
     for(list<Function>::const_iterator i = program.begin(); i != program.end(); ++i)
         wrap << *i << wrapper::endl;

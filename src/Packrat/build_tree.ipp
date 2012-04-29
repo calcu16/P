@@ -43,6 +43,13 @@ BuildTree<fold_left_t<S, R, SEP> >::~BuildTree()
     delete r_;
 }
 
+/* Destructor for trees assembled with postfix */
+template<typename S, typename R, typename SEP>
+BuildTree<postfix_t<S, R, SEP> >::~BuildTree()
+{
+    delete r_;
+}
+
 /* Standard tree swap */
 template<typename T>
 void BuildTree<T>::swap(BuildTree<T>& other)
@@ -74,6 +81,13 @@ void BuildTree<std::tuple<TS...> >::swap(BuildTree<T>& other)
 /* Fold_left tree swap */
 template<typename S, typename R, typename SEP>
 void BuildTree<fold_left_t<S, R, SEP> >::swap(BuildTree<T>& other)
+{
+    std::swap(r_, other.r_);
+}
+
+/* postfix tree swap */
+template<typename S, typename R, typename SEP>
+void BuildTree<postfix_t<S, R, SEP> >::swap(BuildTree<T>& other)
 {
     std::swap(r_, other.r_);
 }
@@ -115,6 +129,14 @@ BuildTree<fold_left_t<S, R, SEP> >&
 {
 }
 
+/* postfix tree assignment op */
+template<typename S, typename R, typename SEP>
+BuildTree<postfix_t<S, R, SEP> >&
+    BuildTree<postfix_t<S, R, SEP> >::operator=(BuildTree<T> rhs)
+{
+}
+
+
 /* Generic tree dereference */
 template<typename T>
 T& BuildTree<T>::operator*()
@@ -146,6 +168,13 @@ std::tuple<TS...>& BuildTree<std::tuple<TS...> >::operator*()
 /* Fold_left tree dereference */
 template<typename S, typename R, typename SEP>
 std::tuple<R, SEP, R>& BuildTree<fold_left_t<S, R, SEP> >::operator*()
+{
+    return *r_;
+}
+
+/* postfix tree dereference */
+template<typename S, typename R, typename SEP>
+std::tuple<R, SEP>& BuildTree<postfix_t<S, R, SEP> >::operator*()
 {
     return *r_;
 }
@@ -186,6 +215,15 @@ const std::tuple<R, SEP, R>& BuildTree<fold_left_t<S, R, SEP> >::operator*() con
     return *r_;
 }
 
+/* postfix tree const dereference */
+template<typename S, typename R, typename SEP>
+const std::tuple<R, SEP>& BuildTree<postfix_t<S, R, SEP> >::operator*() const
+{
+    return *r_;
+}
+
+
+
 /* Constructor given an AST */
 template<typename T>
 BuildTree<T>::BuildTree(const AST& tree)
@@ -196,6 +234,9 @@ BuildTree<T>::BuildTree(const AST& tree)
 }
 
 // Templates instantiating BuildTree for int and string
+template<>
+BuildTree<bool>::BuildTree(const AST& tree);
+
 template<>
 BuildTree<int>::BuildTree(const AST& tree);
 
@@ -209,6 +250,7 @@ BuildTree<std::string>::BuildTree(const AST& tree);
 template<typename L>
 BuildTree<std::list<L> >::BuildTree(const AST& tree)
 {
+    assert(tree["value"].size() == 0);
     t_ = new std::list<L>(); // initialize the list within the tree
     // Build each of the trees in the AST's list structure and add it
     // to the new tree
@@ -224,7 +266,7 @@ BuildTree<wrapper::Union<US...> >::BuildTree(const AST& tree, name_t names)
     // Uses helper BuildUnion to store the constructed tree in t_ 
     t_ = new wrapper::Union<US...>();
     BuildUnion<size, US...>(tree, names, *t_);
-    /*
+    
     if((int)(*t_) == -1)
     {
         std::cerr << tree << std::endl;
@@ -232,7 +274,7 @@ BuildTree<wrapper::Union<US...> >::BuildTree(const AST& tree, name_t names)
         for(size_t i = 0; i < size; ++i)
             std::cerr << "\t" << names[i] << std::endl;
         assert(false);
-    }*/
+    }
     assert((int)(*t_) != -1);
 }
 
@@ -312,15 +354,14 @@ BuildTree<postfix_t<S, R, OP> >::BuildTree(const AST& tree, name_t names)
     : r_(NULL)
 {
     // Sets up iterator for loop to construct fold_left structure
-    AST::const_iterator i = tree.begin();
     std::string value = names[0], op = names[1];
     // Make the first element in the innermost level
-    R left = buildTree<S>((*i)[value]);
+    R left = buildTree<R>(tree[value]);
 
     // Make a tuple containing the previous tuple and the next level
-    for(++i; i != tree.end(); ++i)
+    for(AST::const_iterator i = tree[op].begin(); i != tree[op].end(); ++i)
     {
-        r_ = new std::tuple<S,OP>(left, buildTree<OP>((*i)[op]));
+        r_ = new std::tuple<R,OP>(left, buildTree<OP>(*i));
         S holder;
         holder.value_ = *r_;
         left = (R)holder;
@@ -362,6 +403,16 @@ std::tuple<R, SEP, R> BuildTree<fold_left_t<S, R, SEP> >::makeTree(const AST& tr
     BuildTree<T> build(tree, names);
     return *build;
 }
+
+// makeTree for postfix structure
+template<typename S, typename R, typename SEP>
+template<size_t I>
+std::tuple<R, SEP> BuildTree<postfix_t<S, R, SEP> >::makeTree(const AST& tree, typename table_t<I>::type names)
+{
+    BuildTree<T> build(tree, names);
+    return *build;
+}
+
 #include <iostream>
 // makeTree for int trees
 template<>

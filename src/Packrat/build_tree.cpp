@@ -1,8 +1,20 @@
 #include "build_tree.hpp"
 #include <cassert>
 #include <string>
+#include <iostream>
 using namespace std;
 using namespace packrat;
+
+template<>
+BuildTree<bool>::BuildTree(const AST& tree)
+{
+    if(tree["value"].size() == 0)
+        t_ = new bool(tree["value"].length() > 0);
+    else if(*tree["value"]["type"] == "bool")
+        t_ = new bool(*tree["value"]["value"] == "true");
+    else
+        t_ = NULL;
+}
 
 template<>
 BuildTree<int>::BuildTree(const AST& tree)
@@ -28,7 +40,6 @@ BuildTree<unsigned long long int>::BuildTree(const AST& tree)
         t_ = NULL;
 }
 
-#include <iostream>
 template<>
 BuildTree<string>::BuildTree(const AST& tree)
 {
