@@ -16,6 +16,7 @@ TEX_DIR		= tex
 BUILD_DIR	= build
 DEP_DIR		= $(BUILD_DIR)/deps
 OBJ_DIR		= $(BUILD_DIR)/obj
+LIB_DIR		= $(BUILD_DIR)/lib
 DOC_DIR		= $(BUILD_DIR)/doc
 TARGET_DIR	= $(BUILD_DIR)/bin
 PACKRAT_DIR	= $(SRC_DIR)/Packrat
@@ -34,7 +35,7 @@ OBJ_FILES	= $(NAMES:%=$(OBJ_DIR)/%.o)
 PROGRAM		= $(TARGET_DIR)/pc
 
 DOC_TARGETS	= $(DOC_FILES:%=$(DOC_DIR)/%.pdf)
-TARGETS		= documents compiler
+TARGETS		= documents compiler test
 
 LOOKUP		= $(filter %$(1).cpp, $(CPP_FILES))
 
@@ -44,12 +45,14 @@ documents: $(DOC_TARGETS)
 
 compiler: $(PROGRAM)
 
+test: | $(LIB_DIR)
+
 clean:
 	-rm -rf $(BUILD_DIR)
 
 $(BUILD_DIR):
 	mkdir $@
-$(DEP_DIR) $(OBJ_DIR) $(TARGET_DIR) $(DOC_DIR): | $(BUILD_DIR)
+$(DEP_DIR) $(OBJ_DIR) $(TARGET_DIR) $(DOC_DIR) $(LIB_DIR): | $(BUILD_DIR)
 	mkdir $@
 
 $(DEP_DIR)/%.d: | $(DEP_DIR)
@@ -65,7 +68,7 @@ $(PROGRAM): $(OBJ_FILES) | $(TARGET_DIR)
 
 -include $(DEPENDS)
 
-$(DOC_DIR)/%.pdf: $(DOC_DIR)
+$(DOC_DIR)/%.pdf: | $(DOC_DIR)
 	$(TEX) -draftmode $(TEX_FLAGS) $(TEX_DIR)/$(*F).tex >/dev/null 2>/dev/null; \
 	$(TEX) $(TEX_FLAGS) $(TEX_DIR)/$(*F).tex && \
 	mv $(*F).pdf $@ && \
@@ -75,6 +78,7 @@ $(OBJ_DIR)/%.o: | $(OBJ_DIR)
 	$(CXX) $(CXX_FLAGS) -c -o $@ $(call LOOKUP,$(*F))
 
 # giving up and LaTeX has no magic
-$(DOC_DIR)/PackratParser.tex : $(TEX_DIR)/PackratParser.tex $(TEX_DIR)/PackratParser/usingAST.tex
-$(DOC_DIR)/PStandard.tex : $(TEX_DIR)/PStandard.tex $(TEX_DIR)/PStandard/operation.tex $(TEX_DIR)/PStandard/scope.tex $(TEX_DIR)/PStandard/terms.tex
-$(DOC_DIR)/Thoughts.tex : $(TEX_DIR)/Thoughts.tex $(TEX_DIR)/Thoughts/introduction.tex $(TEX_DIR)/Thoughts/optimizations.tex $(TEX_DIR)/Thoughts/semantics.tex
+$(DOC_DIR)/PackratParser.pdf : $(TEX_DIR)/PackratParser.tex $(TEX_DIR)/PackratParser/usingAST.tex
+$(DOC_DIR)/PStandard.pdf : $(TEX_DIR)/PStandard.tex $(TEX_DIR)/PStandard/operation.tex $(TEX_DIR)/PStandard/scope.tex $(TEX_DIR)/PStandard/terms.tex
+$(DOC_DIR)/Thoughts.pdf : $(TEX_DIR)/Thoughts.tex $(TEX_DIR)/Thoughts/introduction.tex $(TEX_DIR)/Thoughts/optimizations.tex $(TEX_DIR)/Thoughts/semantics.tex
+
