@@ -1,3 +1,31 @@
+/*
+Copyright (c) 2012, Andrew Carter, Dietrich Lagenbach, Xanda Schofield
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies,
+either expressed or implied, of the FreeBSD Project.
+*/
 #include "pprinter.hpp"
 #include "../Packrat/pst.hpp"
 #include "../Wrapper/oindentstream.hpp"
@@ -39,6 +67,8 @@ operator<<(wrapper::oIndentStream& out, const BinOp& op)
 {
     switch(op.value_)
     {
+    case BinOp::COMMA:
+        return out << " , ";
     case BinOp::ASSIGN:
         return out << " = ";
     case BinOp::PLUS:
@@ -128,9 +158,11 @@ operator<<(wrapper::oIndentStream& out, const UnaryExpression& uexpr)
         assert(get<UnaryExpression::OP>(uexpr.value_).value_
             == UnaryOp::DEREFERENCE);
         string builder = "FatPointer<" + *CURRENT_TYPE + " >";
-        delete CURRENT_TYPE;
+        const string* last = CURRENT_TYPE;
         CURRENT_TYPE = new string(builder);
         out << get<UnaryExpression::VALUE>(uexpr.value_);
+        delete CURRENT_TYPE;
+        CURRENT_TYPE = last;
     }
     return out;
 }
@@ -141,12 +173,15 @@ operator<<(wrapper::oIndentStream& out, const BinaryExpression& bexpr)
     int op    = get<BinaryExpression::OP >(bexpr.value_).value_,
         nprec = BinOp::prec[op],
         cprec = *out;
+    // std::cerr << nprec << " vs. " << cprec;
     if(nprec < cprec)
         out << "(";
+    *out = nprec + (BinOp::assoc[op] != BinOp::L);
+    // std::cerr << "*" << *out << std::endl;
     out << get<BinaryExpression::LHS>(bexpr.value_);
-    *out = nprec + (BinOp::assoc[op] == BinOp::R);
     out << get<BinaryExpression::OP >(bexpr.value_);
-    *out = nprec + (BinOp::assoc[op] == BinOp::L);
+    *out = nprec + (BinOp::assoc[op] != BinOp::R);
+    // std::cerr << "*" << *out << std::endl;
     out << get<BinaryExpression::RHS>(bexpr.value_);
     if(nprec < cprec)
         out << ")";
@@ -157,9 +192,10 @@ static wrapper::oIndentStream&
 operator<<(wrapper::oIndentStream& out, const Index& index)
 {
     *out = Index::prec;
-    
-    return out  << get<Index::VALUE>(index.value_)
-                << "[" << get<Index::INDEX>(index.value_) << "]";
+    out  << get<Index::VALUE>(index.value_);
+    *out = 0;
+    out<< "[" << get<Index::INDEX>(index.value_) << "]";
+    return out;
 }
 
 static wrapper::oIndentStream&
@@ -204,6 +240,7 @@ operator<<(wrapper::oIndentStream& out, const Initializer& init)
     out << get<Initializer::INDENTIFIER>(init.value_);
     delete CURRENT_TYPE;
     CURRENT_TYPE = NULL;
+    *out = 1;
     out << " = " << get<Initializer::VALUE>(init.value_);
     CURRENT_TYPE = last;
     return out;
@@ -346,12 +383,19 @@ operator<<(wrapper::oIndentStream& out, const Parameters& pars)
 static wrapper::oIndentStream&
 operator<<(wrapper::oIndentStream& out, const Function& func)
 {
+    REFERENCE = false;
+    CURRENT_TYPE = &get<Function::RETURN_TYPE>(func.value_)
+                            .value_.get<Type::TYPENAME>();
+    out << get<Function::NAME>(func.value_);
+    CURRENT_TYPE = NULL;
+    /*
     out << get<Function::RETURN_TYPE>(func.value_)
         << " "
-        << get<Function::NAME>(func.value_)
-        << get<Function::PARAMETERS>(func.value_)
-        << wrapper::endl;
-    out << get<Function::BODY>(func.value_);
+        << get<Function::NAME>(func.value_);
+    */
+    out << get<Function::PARAMETERS>(func.value_)
+        << wrapper::endl
+        << get<Function::BODY>(func.value_);
     return out;
 }
 

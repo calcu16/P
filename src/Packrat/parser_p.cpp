@@ -1,3 +1,31 @@
+/*
+Copyright (c) 2012, Andrew Carter, Dietrich Lagenbach, Xanda Schofield
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies,
+either expressed or implied, of the FreeBSD Project.
+*/
 #include "parser.hpp"
 using namespace std;
 using namespace packrat;
@@ -14,10 +42,13 @@ const Parser& Parser::getPParser()
             "SPACE",        "[ \t\r\n\v]",
             "SEP",          "({COMMENT}|{SPACE})*_",
             /** Operators **/
-            "UN_OP",        "<type=un_op><value:[-+*&~]>{SEP}",
-            "ADD_OP",       "<type=add_op><value:[-+]>{SEP}",
-            "MUL_OP",       "<type=mul_op><value:[*/%]>{SEP}",
-            "ASSIGN_OP",    "[-+*/%]?=",
+            "POST_OP",      "<value:\\+\\+|\\-\\->{SEP}",
+            "UN_OP",        "<value:[-+*&~]>{SEP}",
+            "ADD_OP",       "<value:[-+]>{SEP}",
+            "MUL_OP",       "<value:[*/%]>{SEP}",
+            "ASSIGN_OP",    "<value:[-+*/%]?=>{SEP}",
+            "REL_OP",       "<value:[<>!=]=|\\<|\\>>{SEP}",
+            "COMMA_OP",     "<value:,>{SEP}",
             /** Keywords **/
             "IF",           "if![a-zA-Z_]{SEP}",
             "ELSE",         "else![a-zA-Z_]{SEP}",
@@ -36,7 +67,6 @@ const Parser& Parser::getPParser()
             "SEMICOLON",    ";{SEP}",
             "COMMA",        ",{SEP}",
             "ASSIGN",       "={SEP}",
-            "RELOP",        "<value:\\=\\=|\\<\\=|\\!\\=|\\>\\=|\\<|\\>>{SEP}",
             /** Values **/
             "IDENT",        "<type=Ident>!({KEYWORD}|[0-9])"
                             "<value:[a-zA-Z0-9]+_>{SEP}",
@@ -44,7 +74,7 @@ const Parser& Parser::getPParser()
                             "(0[xX][0-9a-fA-F]+_|[0-7]+_|!0[0-9]+_)>{SEP}",
             "CONSTANT",     "{INT}",
             /* Parser */
-            "typename",     "<type=Simple><value:{IDENT}|{VOID}>",
+            "typename",     "<value:<type=Simple><value:{IDENT}|{VOID}>>",
             "atom",         "{LPAREN}{expression}{RPAREN}|"
                             "<value:<type=Ident><value:{IDENT}>|"
                             "<type=Int><value:{CONSTANT}>>",
@@ -62,33 +92,36 @@ const Parser& Parser::getPParser()
                             ">",
             "maybe_index",  "<value:{index}>|{maybe_call}",
             "unary",        "<type=UnaryExpr><value:"
-                                "<Op:<value:[-~!&*]>>{SEP}"
-                                    "<Expression:{maybe_unary}>"
+                                "<Op:{UN_OP}><Expression:{maybe_unary}>"
                             ">",
             "maybe_unary",  "<value:{unary}>|{maybe_index}",
             "prod",         "<type=BinaryExpr><value:"
                                 "<Value:{maybe_unary}>:"
-                                "(<Op:<value:[*/%]>>{SEP}"
-                                    "<Value:{maybe_unary}>)+"
+                                "(<Op:{MUL_OP}><Value:{maybe_unary}>)+"
                             ">",
             "maybe_prod",   "<value:{prod}>|{maybe_unary}",
             "sum",          "<type=BinaryExpr><value:"
                                 "<Value:{maybe_prod}>:"
-                                "(<Op:<value:[+-]>>{SEP}<Value:{maybe_prod}>)+"
+                                "(<Op:{ADD_OP}><Value:{maybe_prod}>)+"
                             ">",
             "maybe_sum",    "<value:{sum}>|{maybe_prod}",
             "rel",          "<type=BinaryExpr><value:"
                                 "<Value:{maybe_sum}>"
-                                ":(<Op:{RELOP}><Value:{maybe_sum}>)+"
+                                ":(<Op:{REL_OP}><Value:{maybe_sum}>)+"
                             ">",
             "maybe_rel",    "<value:{rel}>|{maybe_sum}",
             "assign",       "<type=BinaryExpr><value:"
                                 "<Value:{maybe_rel}>:"
-                                "(<Op:<value:[=]>>{SEP}<Value:{maybe_assign}>)"
+                                "(<Op:{ASSIGN_OP}><Value:{maybe_assign}>)"
                             ">",
             "maybe_assign", "<value:{assign}>|{maybe_rel}",
             "ignore_comma", "{maybe_assign}",
-            "expression",   "{maybe_assign}",
+            "comma",        "<type=BinaryExpr><value:"
+                                "<Value:{maybe_assign}>"
+                                ":(<Op:{COMMA_OP}><Value:{maybe_assign}>)+"
+                            ">",    
+            "maybe_comma",  "<value:{comma}>|{maybe_assign}",
+            "expression",   "{maybe_comma}",
             "initializer",  "<value:"
                                 "<Name:{maybe_unary}>"
                                 "{ASSIGN}"
@@ -98,7 +131,7 @@ const Parser& Parser::getPParser()
                                 "(<type=Init>{initializer})"
                                 "|(<type=Default>{ignore_comma})"
                             ">",
-            "decls",        "<Type:<value:{typename}>>"
+            "decls",        "<Type:{typename}>"
                                 "<Decls:<value:{declaration}:"
                                     "({COMMA}{declaration})*>>",
             "for_loop",     "{FOR}{LPAREN}"
@@ -119,15 +152,16 @@ const Parser& Parser::getPParser()
             "block",        "{LBRACK}<value:{statement}*>{RBRACK}",
             "parameter",    "<value:"
                                 "<Const:<value:{CONST}?>>"
-                                "<Type:<value:{typename}>><Name:{expression}>"
+                                "<Type:{typename}><Name:{expression}>"
                             ">",
             "parameters",   "{LPAREN}"
                                 "<value:({parameter}:({COMMA}{parameter})*)|>"
                             "{RPAREN}",
+            "empty_par",    "{LPAREN}{VOID}{RPAREN}<value=>",
             "function",     "<value:"
-                                "<ReturnType:<value:{typename}>>"
-                                "<Name:{IDENT}>"
-                                "<Pars:{parameters}>"
+                                "<ReturnType:{typename}>"
+                                "<Name:{expression}>"
+                                "<Pars:{parameters}|{empty_par}>"
                                 "<Block:{block}>"
                             ">",
             "program",      "{SEP}<value:{function}*>!"

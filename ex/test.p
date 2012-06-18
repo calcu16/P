@@ -26,19 +26,7 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
 */
-#ifndef FIXED_ARRAY_HPP
-#define FIXED_ARRAY_HPP
-#include <cstddef>
-template<typename T>
-class FatPointer;
-
-template<typename T, size_t I>
-class FixedArray
+int main(void)
 {
-private:
-    T data_[I];
-    friend class FatPointer<T>;
-public:
-    T& operator[](size_t index) { return data_[index]; }
-};
-#endif
+    int a = (0+1,c), *c = NULL;
+}

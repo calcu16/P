@@ -26,19 +26,19 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
 */
-#ifndef FIXED_ARRAY_HPP
-#define FIXED_ARRAY_HPP
-#include <cstddef>
-template<typename T>
-class FatPointer;
+#ifndef P_STDIO_HPP
+#define P_STDIO_HPP
+#include
 
-template<typename T, size_t I>
-class FixedArray
+template<typename... ArgsT, typename... ArgsF>
+void p_printf(const char* s, const std::tuple<ArgsT...>& t, ArgsF... args)
 {
-private:
-    T data_[I];
-    friend class FatPointer<T>;
-public:
-    T& operator[](size_t index) { return data_[index]; }
-};
+}
+
+template<typename... Args>
+void p_printf(FatPointer<char> s, typename... Args)
+{
+	
+}
 #endif
+
