@@ -109,4 +109,3 @@ $(OBJ_DIR)/%.o: | $(OBJ_DIR)
 $(DOC_DIR)/PackratParser.pdf : $(TEX_DIR)/PackratParser.tex $(TEX_DIR)/PackratParser/usingAST.tex
 $(DOC_DIR)/PStandard.pdf : $(TEX_DIR)/PStandard.tex $(TEX_DIR)/PStandard/operation.tex $(TEX_DIR)/PStandard/scope.tex $(TEX_DIR)/PStandard/terms.tex
 $(DOC_DIR)/Thoughts.pdf : $(TEX_DIR)/Thoughts.tex $(TEX_DIR)/Thoughts/introduction.tex $(TEX_DIR)/Thoughts/optimizations.tex $(TEX_DIR)/Thoughts/semantics.tex
-
