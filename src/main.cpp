@@ -58,9 +58,10 @@ int main(int argc, char* argv[])
         input = string(istreambuf_iterator<char>(ifs),
                        istreambuf_iterator<char>());
     }
-    
+//    cout << input << endl;
     AST temp = Parser::getPParser().parse("program",input);
-    // cout << temp << endl;
+//    cout << temp << endl;
+//    return 0;
     Program func = buildTree<Program>(temp);
     if(string(argv[2]) == "-")
     {

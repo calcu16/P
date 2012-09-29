@@ -152,7 +152,7 @@ const Parser& Parser::getPParser()
             "block",        "{LBRACK}<value:{statement}*>{RBRACK}",
             "parameter",    "<value:"
                                 "<Const:<value:{CONST}?>>"
-                                "<Type:{typename}><Name:{expression}>"
+                                "<Type:{typename}><Name:{maybe_unary}>"
                             ">",
             "parameters",   "{LPAREN}"
                                 "<value:({parameter}:({COMMA}{parameter})*)|>"
@@ -160,7 +160,7 @@ const Parser& Parser::getPParser()
             "empty_par",    "{LPAREN}{VOID}{RPAREN}<value=>",
             "function",     "<value:"
                                 "<ReturnType:{typename}>"
-                                "<Name:{expression}>"
+                                "<Name:{IDENT}>"
                                 "<Pars:{parameters}|{empty_par}>"
                                 "<Block:{block}>"
                             ">",
