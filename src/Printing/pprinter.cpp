@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012, Andrew Carter, Dietrich Lagenbach, Xanda Schofield
+Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Xanda Schofield
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ operator<<(wrapper::oIndentStream&, const Statement&);
 static wrapper::oIndentStream&
 operator<<(wrapper::oIndentStream&, const Expression&);
 
-
+/*
 static wrapper::oIndentStream&
 operator<<(wrapper::oIndentStream& out, const Type& type)
 {
@@ -61,7 +61,7 @@ operator<<(wrapper::oIndentStream& out, const Type& type)
     }
     return out;
 }
-
+*/
 static wrapper::oIndentStream&
 operator<<(wrapper::oIndentStream& out, const BinOp& op)
 {

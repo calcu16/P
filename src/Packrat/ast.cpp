@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012, Andrew Carter, Dietrich Lagenbach, Xanda Schofield
+Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Xanda Schofield
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -78,8 +78,7 @@ AST::AST(const AST& left, const AST& right)
 }
 
 AST::AST(const string& name, const AST& other)
-    : assoc_(NULL), numbered_(NULL), value_(NULL),
-        start_(other.start_), end_(other.end_), cost_(other.cost_)
+    : value_(NULL), start_(other.start_), end_(other.end_), cost_(other.cost_)
 {
     (*this)[name] = other;
 }

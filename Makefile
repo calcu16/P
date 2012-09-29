@@ -1,4 +1,4 @@
-# Copyright (c) 2012, Andrew Carter, Dietrich Lagenbach, Xanda Schofield
+# Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Xanda Schofield
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 # either expressed or implied, of the FreeBSD Project.
 
 CXX		= g++
-CXX_FLAGS	= -g -Wall -Wextra -pedantic -std=c++0x
+CXX_FLAGS	= -g -Werror -Wall -Wextra -pedantic -std=c++0x
 TEX		= pdflatex
 TEX_FLAGS	= -interaction nonstopmode
 FILT		= bin/gSTLFilt.pl
@@ -60,7 +60,7 @@ FILES		= $(PACKRAT_FILES:%=$(PACKRAT_DIR)/%) \
 CPP_FILES	= $(FILES:%=%.cpp)
 DEPENDS		= $(NAMES:%=$(DEP_DIR)/%.d)
 OBJ_FILES	= $(NAMES:%=$(OBJ_DIR)/%.o)
-PROGRAM		= $(TARGET_DIR)/pc
+PROGRAM		= $(TARGET_DIR)/pcc
 
 DOC_TARGETS	= $(DOC_FILES:%=$(DOC_DIR)/%.pdf)
 TARGETS		= documents compiler test
