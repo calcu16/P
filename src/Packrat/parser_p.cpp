@@ -74,7 +74,8 @@ const Parser& Parser::getPParser()
                             "(0[xX][0-9a-fA-F]+_|[0-7]+_|!0[0-9]+_)>{SEP}",
             "CONSTANT",     "{INT}",
             /* Parser */
-            "typename",     "<value:<type=Simple><value:{IDENT}|{VOID}>>",
+            "typename",     "<value:<type=Simple>"
+                                "<value:{IDENT}|{VOID}>>",
             "atom",         "{LPAREN}{expression}{RPAREN}|"
                             "<value:<type=Ident><value:{IDENT}>|"
                             "<type=Int><value:{CONSTANT}>>",

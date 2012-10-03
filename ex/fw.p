@@ -37,3 +37,7 @@ void fw(const int** in, const int length, int** out)
                     out[i][k] = out[i][j]+out[j][k];
 }
 
+int main()
+{
+	return 0;
+}

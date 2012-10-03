@@ -65,13 +65,13 @@ int main(int argc, char* argv[])
     Program func = buildTree<Program>(temp);
     if(string(argv[2]) == "-")
     {
-        cout << "#include ../lib/plib.hpp" << endl;
+        cout << "#include <plib.hpp>" << endl;
         cout << func << endl;
     }
     else
     {
         ofstream ofs(argv[2]);
-        ofs << "#include ../lib/plib.hpp" << endl;
+        ofs << "#include <plib.hpp>" << endl;
         ofs << func << endl;
     }
     return 0;

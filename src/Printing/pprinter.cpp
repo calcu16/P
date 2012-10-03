@@ -386,6 +386,7 @@ operator<<(wrapper::oIndentStream& out, const Function& func)
     REFERENCE = false;
     CURRENT_TYPE = &get<Function::RETURN_TYPE>(func.value_)
                             .value_.get<Type::TYPENAME>();
+    out << *CURRENT_TYPE << " ";
     out << get<Function::NAME>(func.value_);
     CURRENT_TYPE = NULL;
     /*

@@ -44,7 +44,7 @@ struct PointerType
 template<typename T>
 struct PointerType<FatPointer<T> >
 {
-    typedef typename PointerType<FatPointer<T> >::type *type;
+    typedef typename FatPointer<T>::type *type;
 };
 
 template<typename T>
@@ -62,6 +62,7 @@ private:
     FatPointer<T>* reference();
     friend T* getReference<T>(const T&);
 public:
+    typedef T type;
     FatPointer();
     FatPointer(const T&, size_t = 1);
     FatPointer(const FatPointer<T>&, bool = false, int = 0);
