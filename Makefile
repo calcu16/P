@@ -90,7 +90,7 @@ $(DEP_DIR)/%.d: | $(DEP_DIR)
 
 $(PROGRAM): $(OBJ_FILES) | $(TARGET_DIR)
 	bin/linecheck -Ro --fix-endings --fix-last-line src && \
-#	bin/cppcheck -v --enable=all --std=c99 --std=c++11 src && \
+#	bin/cppcheck -v --enable=all --std=c99 src && \
 	$(CXX) $(CXX_FLAGS) -o $@ $(OBJ_FILES) 2>&1 | \
 	$(FILT) $(FILT_FLAGS)
 

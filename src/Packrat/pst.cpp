@@ -1,5 +1,7 @@
 /*
-Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Rai Feren, Xanda Schofield
+Copyright (c) 2012,
+Andrew Carter, Dietrich Langenbach, Rai Feren, Xanda Schofield
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

@@ -1,5 +1,7 @@
 /*
-Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Rai Feren, Xanda Schofield
+Copyright (c) 2012,
+Andrew Carter, Dietrich Langenbach, Rai Feren, Xanda Schofield
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -109,7 +111,8 @@ namespace packrat
             typedef array_t<dir_t, names_l>::type assoc_t;
             
             static prec_t prec;  // Defines order for printing
-            static assoc_t assoc;  // Defines if assoc[i] is Left or Right associative
+            // Defines if assoc[i] is Left or Right associative
+            static assoc_t assoc;
             static names_t names;  // Defines how to print names[i]
             type value_; // Marks what type of BinOp has been constructed
         };
@@ -230,7 +233,8 @@ namespace packrat
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
-            type value_; // Is this variable using an Initializer or the Default?
+            // Is this variable using an Initializer or the Default?
+            type value_;
         };
         
        /*
