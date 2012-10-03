@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Xanda Schofield
+Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Rai Feren, Xanda Schofield
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -52,31 +52,45 @@ namespace packrat
         struct ForLoop;
         struct If;
         
+       /*
+        * Defines a type (e.g, Simple)
+        */
         struct Type
         {
             enum type_t { TYPENAME };
             typedef wrapper::Union<std::string> type;
             static const int names_l = 1;
             typedef table_t<names_l>::type names_t;
-            static names_t names;
-            type value_;
+            static names_t names;  // Holds the names of all types for printing
+            type value_; // Marks which type has been constructed
         };
         
         
         typedef std::string Identifier;
-        
+
+       /*
+        * Defines Unary Operations.
+        * 
+        *  Unary Operators all have the same precedence for printing,
+        *  which is greater than that of Binary Operators.
+        */
         struct UnaryOp
         {
             typedef int type;
             enum op_t { NEGATE, COMPLEMENT, NOT, REFERENCE, DEREFERENCE };
             static const int names_l = 5;
-            static const int prec = 12;
+            static const int prec = 12;  // Defines precedence for printing
             typedef table_t<names_l>::type names_t;
-            
-            static names_t names;
-            type value_;
+            static names_t names;  // Contains names of operators
+            type value_; // Marks which UnaryOp has been constructed
         };
         
+       /*
+        * Defines Binary Operations
+        * 
+        *  Binary Operators can be Left or Right associative.
+        *  Binary Operators also each have their own precedence.
+        */
         struct BinOp
         {
             typedef int type;
@@ -94,13 +108,19 @@ namespace packrat
             typedef array_t<int, names_l>::type prec_t;
             typedef array_t<dir_t, names_l>::type assoc_t;
             
-            static prec_t prec;
-            static assoc_t assoc;
-            static names_t names;
-            type value_;
+            static prec_t prec;  // Defines order for printing
+            static assoc_t assoc;  // Defines if assoc[i] is Left or Right associative
+            static names_t names;  // Defines how to print names[i]
+            type value_; // Marks what type of BinOp has been constructed
         };
         
         
+       /*
+        * Expressions 
+        * 
+        *   Expressions are essentially operators paired with values
+        *   (the values themselves can be more expressions)
+        */
         struct Expression
         {
             enum expression_t { IDENTIFIER, INTEGER, UNARY,
@@ -113,12 +133,18 @@ namespace packrat
                                    Index> type;
             static const int names_l = 6;
             typedef table_t<names_l>::type names_t;
-            static names_t names;
-            type value_;
+            static names_t names; // Defines how to print Expressions
+            type value_; // Marks which Expression was constructed
         };
         
         typedef std::list<Expression> Arguments;
         
+       /*
+        * Call
+        *
+        *  A Call identifies either the function being called or what
+        *  arguments are passed to a function.
+        */
         struct Call
         {
             enum call_t { IDENTIFIER, ARGUMENTS };
@@ -129,6 +155,13 @@ namespace packrat
             type value_;
         };
         
+
+       /*
+        * Index 
+        *
+        *  Indexes are used to access specific elements of a
+        *  Container.
+        */
         struct Index
         {
             enum index_t {VALUE, INDEX};
@@ -137,11 +170,17 @@ namespace packrat
             static const int prec = 13;
             typedef table_t<names_l>::type names_t;
             static names_t names;
+            // Often Indexes are calculated from something, so our
+            // value is the result of expressions.
             std::tuple<Expression, Expression> value_;
             
             operator Expression() const;
         };
         
+       /*
+        * Binary Expressions look like x + (y * 2). (LHS = x, RHS is
+        * another Expression, y * 2)
+        */
         struct BinaryExpression
         {
             enum binary_expression_t { LHS, OP, RHS };
@@ -153,6 +192,9 @@ namespace packrat
             
             operator Expression() const;
         };
+       /*
+        * UnaryExpressions look like !(x || y). (OP = !, VALUE = (x || y))
+        */
         struct UnaryExpression
         {
             enum binary_expression_t { OP, VALUE };
@@ -164,7 +206,9 @@ namespace packrat
         };
         
         
-        
+       /*
+        * Initializers connect a Variable Identifier to some Value.
+        */
         struct Initializer
         {
             enum declaration_t { INDENTIFIER, VALUE };
@@ -175,6 +219,10 @@ namespace packrat
             type value_;
         };
         
+       /*
+        * Declarations of variables either Initialize to a value, or
+        * go with the default.
+        */
         struct Declaration
         {
             enum declaration_t { INITIALIZER, DEFAULT };
@@ -182,9 +230,12 @@ namespace packrat
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
-            type value_;
+            type value_; // Is this variable using an Initializer or the Default?
         };
         
+       /*
+        * Can put multiple declarations of variables on a line.
+        */
         struct Declarations
         {
             enum declarations_t { TYPE, DECLARATIONS };
@@ -196,7 +247,11 @@ namespace packrat
         };
         
         typedef std::list<Statement> Block;
-        
+
+       /*
+        * Statements are either expressions, declarations of
+        * variables, or control flow commands (If/For)
+        */
         struct Statement
         {
             enum statement_t { SIMPLE, RETURN, DECLARATIONS, IF, FOR, BLOCK};
@@ -214,6 +269,11 @@ namespace packrat
             operator Block() const;
         };
         
+       /*
+        * For loops create a loop counter variable, check for some
+        * condition, increment their loop counter in some way, and
+        * each iteration execute the Body.
+        */
         struct ForLoop
         {
             enum forloop_t { INIT, COND, INC, BODY };
@@ -225,6 +285,10 @@ namespace packrat
             type value_;
         };
         
+       /*
+        * If statements check a condition. If the condition is true,
+        * then execute the body. Need to track both of those.
+        */
         struct If
         {
             enum if_t { COND, BODY };
@@ -235,7 +299,11 @@ namespace packrat
             type value_;
         };
         
-        
+       /*
+        * Parameters are a type paired with a name with an additional
+        * specifier of if they are `const` or not. These get passed
+        * into functions.
+        */
         struct Parameter
         {
             enum parameter_t { CONST, TYPE, NAME };
@@ -248,6 +316,12 @@ namespace packrat
         
         typedef std::list<Parameter> Parameters;
         
+       /*
+        * Functions are defined by four things: Return Type, Name,
+        * Parameter List, Body.
+        *
+        * e.g. Int foo(char a) { return 42; }
+        */
         struct Function
         {
             enum function_t { RETURN_TYPE, NAME, PARAMETERS, BODY };

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Xanda Schofield
+Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Rai Feren, Xanda Schofield
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,12 @@ using namespace std;
 using namespace packrat;
 using namespace packrat::pst;
 
+
+/*
+ * Array declarations
+ *
+ *  Contains things like the names of operators, precedence rules, etc.
+ */
 
 Type::names_t               Type::names
     = {"Simple"};
@@ -88,6 +94,7 @@ Parameter::names_t          Parameter::names
     = {"Const", "Type", "Name"};
 Function::names_t           Function::names
     = {"ReturnType", "Name", "Pars", "Block"};
+
 
 BinaryExpression::operator Expression() const
 {
