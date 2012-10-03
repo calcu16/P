@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (c) 2010, 2011, 2012, Andrew Carter
 # All rights reserved.
 #
@@ -214,7 +214,7 @@ for arg in args:
                     for subfile in os.listdir(currentfile):
                         stack.append(os.path.join(currentfile,subfile))
                 else:
-                    print "%s is a directory, skipping" % currentfile
+                    print("%s is a directory, skipping" % currentfile)
             else:
                 filenames.add(currentfile)
 
@@ -285,8 +285,8 @@ for filename in filenames:
             lines[len(lines):] = line
         inFile.close()
         if binary and not options.force:
-            print "WARNING! %s appears to be a binary file, skipping" \
-                    % filename
+            print("WARNING! %s appears to be a binary file, skipping" \
+                    % filename)
         else:
             if acceptedEnding and fileEndings and acceptedEnding != fileEndings:
                 error["endings"] = lineEndingError[fileEndings] \
@@ -309,9 +309,9 @@ for filename in filenames:
                     char += "s"
                 output.append(info)
             if output:
-                print filename, ":"
+                print(filename, ":")
             for out in output:
-                print "\t", out
+                print("\t", out)
             if fixed:
                 try:
                     if options.rename:
@@ -321,15 +321,15 @@ for filename in filenames:
                         for line in lines:
                             outFile.write(line)
                     except IOError:
-                        print 'Error writing to file %s' % filename
-			status = 2
+                        print('Error writing to file %s' % filename)
+                        status = 2
                     if options.rename:
                         shutil.copystat(filename+".bad",filename)
                 except OSError:
-                    print 'ERROR! %s.bad already exists,' + \
-                            'delete it or move it out of the way' % filename
+                    print('ERROR! %s.bad already exists,' + \
+                            'delete it or move it out of the way' % filename)
                     status = 1
     except OSError:
-        print 'Error reading file ' + filename
-	status = 2
+        print('Error reading file ' + filename)
+        status = 2
 sys.exit(status)
