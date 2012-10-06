@@ -1,5 +1,7 @@
 /*
-Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, Xanda Schofield
+Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, 
+Xanda Schofield, Rai Feren
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,6 +30,7 @@ either expressed or implied, of the FreeBSD Project.
 */
 #include <string>
 #include <iostream>
+#include <unordered_set>
 #include "Packrat/ast.hpp"
 #include "Packrat/symbol.hpp"
 #include "Packrat/parser.hpp"
@@ -36,13 +39,88 @@ either expressed or implied, of the FreeBSD Project.
 #include "Wrapper/union.hpp"
 #include "Printing/pprinter.hpp"
 
+// Should probably use a compiler flag for this, but lazy for now.
+#define VERBOSE 0
+
 using namespace std;
 using namespace packrat;
 using namespace packrat::pst;
 using namespace wrapper;
 
+
+
+/*
+ * Kinda dumb test function to experiment with extracting data from P
+ * programs.
+ *
+ * Goal is to create a set of the variables in a function. Then when
+ * it sees an expression, it should go "Wait, do my variables exist?",
+ * and check that.
+ */
+int checkVars(Program& program)
+{
+    int varCount = 0;
+    for (Function& func : program)
+    {
+        unordered_set<Identifier> variables; 
+
+        string name = get<1>(func.value_);
+        cerr << "Processing " << name << endl;
+        Block& funcBody = get<3>(func.value_);
+        for (Statement& codeLine : funcBody) 
+        {
+            cerr << "Line is a " << codeLine.names[codeLine.value_] << endl;
+
+            int codeType = int(codeLine.value_);
+            // Note to Rai: ...This would be better as switch. Don't be dumb. <_<
+            if (codeType == 2)
+            {
+                Declarations declVars   = codeLine.value_.get<2>();
+                list<Declaration> decls = get<1>(declVars.value_);
+                for (Declaration& decl : decls)
+                {
+                    cerr << "Declared a " << decl.names[decl.value_] << endl;
+                    if (int(decl.value_) == 0) {
+                      Initializer initer = decl.value_.get<0>();
+                      Expression expr = get<0>(initer.value_);
+                      cerr << expr.value_.get<0>() << endl;
+                      variables.insert(expr.value_.get<0>());
+                    } else {
+                      Expression expr = decl.value_.get<1>();
+                      cerr << expr.value_.get<0>() << endl;
+                      variables.insert(expr.value_.get<0>());
+                    }
+
+                    ++varCount;
+                }
+            }
+            else if (codeType == 0)
+            {
+              // Simple
+              Expression curExpr = 
+                codeLine.value_.get<0>();
+              cerr << "Furthermore, it does " << 
+                curExpr.names[curExpr.value_] << endl;
+            }
+            else if (codeType == 1)
+            { // Return
+              Expression curExpr = 
+                codeLine.value_.get<1>();
+              cerr << "Furthermore, it does " << 
+                curExpr.names[curExpr.value_] << endl;
+            }
+
+        }
+
+    }
+    return varCount;
+}
+
+
+
 int main(int argc, char* argv[])
 {
+    // Handle inputs
     if(argc != 3)
     {
         cout << argv[0] << " [input] [output]" << endl;
@@ -58,11 +136,26 @@ int main(int argc, char* argv[])
         input = string(istreambuf_iterator<char>(ifs),
                        istreambuf_iterator<char>());
     }
-//    cout << input << endl;
+
+    // Actually build the tree
+
+#if VERBOSE
+    cerr << input << endl;
+#endif
     AST temp = Parser::getPParser().parse("program",input);
-//    cout << temp << endl;
-//    return 0;
+#if VERBOSE
+    cerr << temp << endl;
+#endif
+
     Program func = buildTree<Program>(temp);
+
+    // This is where we can do cool optimization stuff.
+    
+    int asdf = checkVars(func);
+    cerr << "Declared " << asdf << " Variables." << endl;
+
+    // Output
+
     if(string(argv[2]) == "-")
     {
         cout << "#include <plib.hpp>" << endl;

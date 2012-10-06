@@ -305,8 +305,8 @@ namespace packrat
         
        /*
         * Parameters are a type paired with a name with an additional
-        * specifier of if they are `const` or not. These get passed
-        * into functions.
+        * specifier of if they are `const` or not (not implies that
+        * this is a return value). These get passed into functions.
         */
         struct Parameter
         {
