@@ -30,10 +30,11 @@ either expressed or implied, of the FreeBSD Project.
 #define PACKRAT_AST_HPP
 #include "../Wrapper/iterator.hpp"
 #include <iostream>
+#include <list>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <list>
 
 namespace packrat
 {
@@ -48,22 +49,51 @@ namespace packrat
  */
     class AST
     {
-
     private:
-/*
- * typedef because I keep changing this back and forth between list and array
- */
-typedef std::vector<AST*> numbered_t;
-
-/*
- * Typedefing both CS70 style and STL style iterators
- */
+        struct AST_;
+        typedef std::shared_ptr<AST_> AST_t;
+        typedef std::vector<AST> numbered_t;
+        typedef std::unordered_map<std::string,AST> assoc_t;
+        /* Wrapped class for the values */
+        struct AST_
+        {
+            /*
+             * An associative map from a string name to 
+             *  an abstract syntax tree below
+             * generated via <name=constant> or <name:peg>
+             */
+            assoc_t assoc_;
+            /*
+             * A list of abstract syntax trees, 
+             * generated via the + or * operator
+             */
+            numbered_t numbered_;
+            /*
+             * a string value representing the matched string
+             */
+            std::shared_ptr<std::string> value_;
+            /*
+             * The start and end of this string from the original string.
+             */
+            int start_, end_;
+            /*
+             * The cost associated with making this AST
+             */
+            int cost_;
+            
+            AST_(int,int,int=0);
+            AST_(int,int,const std::string&,int);
+            std::ostream& print(std::ostream&, std::string) const;
+        };
+        AST_t tree_;
     public:
-typedef wrapper::Iterator<numbered_t::const_iterator,const AST> ConstIterator;
-typedef wrapper::Iterator<numbered_t::iterator,AST> Iterator;
-
-typedef ConstIterator const_iterator;
-typedef Iterator iterator;
+        /*
+         * Typedefing both CS70 style and STL style iterators
+         */
+        typedef numbered_t::const_iterator ConstIterator;
+        typedef numbered_t::iterator Iterator;
+        typedef ConstIterator const_iterator;
+        typedef Iterator iterator;
     private:
         /*
          * These memebers represent the string and AST
@@ -72,50 +102,18 @@ typedef Iterator iterator;
          */
         static const std::string NO_STRING;
         static const AST NO_AST;
-        
-        /*
-         * An associative map from a string name to 
-         *  an abstract syntax tree below
-         * generated via <name=constant> or <name:peg>
-         */
-        std::unordered_map<std::string, AST*> assoc_;
-        /*
-         * A list of abstract syntax trees, 
-         * generated via the + or * operator
-         */
-        numbered_t numbered_;
-        /*
-         * a string value representing the matched string
-         */
-        std::string *value_;
-        /*
-         * The start and end of this string from the original string.
-         */
-        int start_, end_;
-        /*
-         * The cost associated with making this AST
-         */
-        int cost_;
     public:
         /* A Nil AST, represents no match */
         explicit AST(int=-1);
-        /* Match of a string */
         AST(int,int,const std::string&,int=0);
     private:
+        AST(AST_t);
         AST(int,int,int=0);
-        AST(const AST&, const AST&);
+        AST(const AST&,const AST&);
         AST(const std::string&, const AST&);
     public:
-        /*
-         * This class operates on pointers
-         * and therefore requires replacing
-         * default copy construct/assignment/destructor
-         */
-        AST(const AST&);
-        ~AST();
+        /* Use default copy contructor etc. */
         void swap(AST&);
-        AST& operator=(AST);
-        
         
         /* Names a abstract syntax tree */
         AST operator() (const std::string&) const;
