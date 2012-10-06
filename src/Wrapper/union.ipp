@@ -98,7 +98,7 @@ void* wrapper::Union<T, TS...>::copyActive() const
 template<typename T, typename... TS>
 void wrapper::Union<T, TS...>::destroyActive()
 {
-    helper_.copy(active_, value_);
+    helper_.destroy(active_, value_);
 }
 
 template<typename T, typename... TS>
@@ -134,6 +134,6 @@ void wrapper::Union<T,TS...>::
     if(active == I)
         delete (U*)value;
     else
-        next_.destory(active, value);
+        next_.destroy(active, value);
 }
 

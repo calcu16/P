@@ -44,6 +44,21 @@ namespace wrapper
         template<int, typename...>
         class Helper {};
         
+        template<int I>
+        struct Helper<I>
+        {
+            inline void* copy(int i, void*) const;
+            inline void destroy(int i, void*) const;
+        };
+        
+        template<int I, typename U, typename... US>
+        struct Helper<I, U, US...>
+        {
+            Helper<I+1,US...> next_;
+            inline void* copy(int i, void*) const;
+            inline void destroy(int i, void*) const;
+        };
+        
         Helper<0, T, TS...> helper_;
         int active_;
         void* value_;
@@ -65,7 +80,7 @@ namespace wrapper
     private:
         void* copyActive() const;
         void destroyActive();
-        
+        /*
         template<int I>
         struct Helper<I>
         {
@@ -80,6 +95,7 @@ namespace wrapper
             inline void* copy(int i, void*) const;
             inline void destroy(int i, void*) const;
         };
+        */
     };
 }
 #include "union.ipp"

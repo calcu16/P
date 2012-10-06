@@ -26,8 +26,10 @@
 # of the authors and should not be interpreted as representing official policies, 
 # either expressed or implied, of the FreeBSD Project.
 
-CXX		= g++
-CXX_FLAGS	= -g -Werror -Wall -Wextra -pedantic -std=c++0x
+CXX		= /cs/cs70/clang+llvm-3.1-x64_86-linux-gentoo/bin/clang++
+# CXX		= g++
+CXX_FLAGS	= -g -Werror -Wall -Wextra -pedantic -std=c++11 -stdlib=libc++ -I/cs/cs70/include/v1
+LD_FLAGS	= -L/cs/cs70/lib-x86_64-linux-gentoo -Wl,-rpath=/cs/cs70/lib-x86_64-linux-gentoo
 TEX		= pdflatex
 TEX_FLAGS	= -interaction nonstopmode
 FILT		= bin/gSTLFilt.pl
@@ -91,7 +93,7 @@ $(DEP_DIR)/%.d: | $(DEP_DIR)
 $(PROGRAM): $(OBJ_FILES) | $(TARGET_DIR)
 	bin/linecheck -Ro --fix-endings --fix-last-line src && \
 #	bin/cppcheck -v --enable=all --std=c99 src && \
-	$(CXX) $(CXX_FLAGS) -o $@ $(OBJ_FILES) 2>&1 | \
+	$(CXX) $(CXX_FLAGS) $(LD_FLAGS) -o $@ $(OBJ_FILES) 2>&1 | \
 	$(FILT) $(FILT_FLAGS)
 
 -include $(DEPENDS)

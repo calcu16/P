@@ -158,14 +158,14 @@ BuildTree<std::tuple<TS...> >&
 /* Fold_left tree assignment op */
 template<typename S, typename R, typename SEP>
 BuildTree<fold_left_t<S, R, SEP> >&
-BuildTree<fold_left_t<S, R, SEP> >::operator=(BuildTree<T> rhs)
+BuildTree<fold_left_t<S, R, SEP> >::operator=(BuildTree<T>)
 {
 }
 
 /* postfix tree assignment op */
 template<typename S, typename R, typename SEP>
 BuildTree<postfix_t<S, R, SEP> >&
-BuildTree<postfix_t<S, R, SEP> >::operator=(BuildTree<T> rhs)
+BuildTree<postfix_t<S, R, SEP> >::operator=(BuildTree<T>)
 {
 }
 
