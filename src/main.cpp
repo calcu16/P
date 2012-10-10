@@ -127,6 +127,8 @@ bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
  *
  * This function is getting nasty quickly. Splitting it up some more
  * would be wonderful.
+ *
+ * NOTE: Currently does not handle paramters to functions. WHOOPS.
  */
 int checkVars(Program& program)
 {
@@ -137,6 +139,17 @@ int checkVars(Program& program)
 
         string name = get<1>(func.value_);
         cerr << "Processing " << name << endl;
+        
+        Parameters params = get<2>(func.value_);
+        for (Parameter& param : params)
+          {
+            cerr << "Saw some parameter, but don't understand it yet." << endl;
+            Expression pVal = get<2>(param.value_);
+            // Will need to look at the Expression, see if we can
+            //extract a name from it.  
+            //variables.insert();
+          }
+
         Block& funcBody = get<3>(func.value_);
         for (Statement& codeLine : funcBody) 
         {
