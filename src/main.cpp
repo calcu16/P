@@ -52,7 +52,7 @@ using namespace wrapper;
 bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
 {
   bool res = true;
-  cerr << "Got into checkIfExists" << endl;
+  string badVar = "";
   switch (int(curExpr.value_)) 
     {
     case 0:
@@ -63,10 +63,14 @@ bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
         if (res)
           cerr << "Found " ;
         else
-          cerr << "Coudl not find ";
+            cerr << "ERROR: Could not find ";
         
         cerr << curExpr.value_.get<0>() << endl;
 #endif
+        // RAI: This block should do better stuff, but for now VERBOSE
+        // covers it.
+        if (not res)
+          badVar = curExpr.value_.get<0>();
         break;
       }
     case 1:
@@ -83,16 +87,16 @@ bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
     case 3:
       {
         // Binary
-        cerr << "Starting bin conversion" << endl;
         BinaryExpression curBin = curExpr.value_.get<3>();
-        cerr << "Succeeded" << endl;
         res = (checkIfExists(get<0>(curBin.value_), vars) && 
                checkIfExists(get<2>(curBin.value_), vars)); break;
       }
     case 4:
       {
         // call
-        cerr << "Not yet handling Calls" << endl;
+        cerr << "Assuming function call is defined..." << endl;
+        // NOTE TO RAI: Should check the environment to see if the
+        // function is declared here.
         break;
       }
     case 5:
@@ -136,7 +140,7 @@ int checkVars(Program& program)
         Block& funcBody = get<3>(func.value_);
         for (Statement& codeLine : funcBody) 
         {
-            cerr << "Line is a " << codeLine.names[codeLine.value_] << endl;
+          //cerr << "Line is a " << codeLine.names[codeLine.value_] << endl;
 
             Expression curExpr;
             bool existance = true;
@@ -147,12 +151,11 @@ int checkVars(Program& program)
               {
                 // Simple
                 curExpr = codeLine.value_.get<0>();
-                
+                /*
                 cerr << "Furthermore, it does " << 
                         curExpr.names[curExpr.value_] << endl;
-                
-                //existance = checkIfExists(curExpr, variables);
-                //cerr << existance << endl;
+                */
+                existance = checkIfExists(curExpr, variables);
                 break;
               }
             case 1:
@@ -172,15 +175,19 @@ int checkVars(Program& program)
                 list<Declaration> decls = get<1>(declVars.value_);
                 for (Declaration& decl : decls)
                 {
-                    cerr << "Declared a " << decl.names[decl.value_] << endl;
+                  //cerr << "Declared a " << decl.names[decl.value_] << endl;
                     if (int(decl.value_) == 0) {
                       Initializer initer = decl.value_.get<0>();
                       Expression expr = get<0>(initer.value_);
-                      cerr << expr.value_.get<0>() << endl;
+#if VERBOSE
+                      cerr << "Declared " << expr.value_.get<0>() << endl;
+#endif
                       variables.insert(expr.value_.get<0>());
                     } else {
                       Expression expr = decl.value_.get<1>();
-                      cerr << expr.value_.get<0>() << endl;
+#if VERBOSE                      
+                      cerr << "Declared " << expr.value_.get<0>() << endl;
+#endif
                       variables.insert(expr.value_.get<0>());
                     }
 
@@ -212,11 +219,6 @@ int checkVars(Program& program)
               break;
               }
             }
-
-            if (not existance) 
-              {
-                cerr << "WHOA, a variable doesn't exist!" << endl; 
-              }
         }
     }
     return varCount;
@@ -256,10 +258,10 @@ int main(int argc, char* argv[])
     Program func = buildTree<Program>(temp);
 
     // This is where we can do cool optimization stuff.
+        
+    int numVars = checkVars(func);
+    cerr << "Declared " << numVars << " Variables." << endl;
     
-    int asdf = checkVars(func);
-    cerr << "Declared " << asdf << " Variables." << endl;
-
     // Output
 
     if(string(argv[2]) == "-")
