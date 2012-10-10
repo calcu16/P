@@ -1,6 +1,6 @@
 /*
-Copyright (c) 2012, Andrew Carter, Dietrich Langenbach, 
-Xanda Schofield, Rai Feren
+Copyright (c) 2012, 
+Andrew Carter, Dietrich Langenbach, Xanda Schofield, Rai Feren
 
 All rights reserved.
 
@@ -40,13 +40,77 @@ either expressed or implied, of the FreeBSD Project.
 #include "Printing/pprinter.hpp"
 
 // Should probably use a compiler flag for this, but lazy for now.
-#define VERBOSE 0
+#define VERBOSE 1
+ // 1 gives you more info on checkIfExists. 2 gets you the syntax trees.
 
 using namespace std;
 using namespace packrat;
 using namespace packrat::pst;
 using namespace wrapper;
 
+
+bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
+{
+  bool res = true;
+  cerr << "Got into checkIfExists" << endl;
+  switch (int(curExpr.value_)) 
+    {
+    case 0:
+      {
+        // Identifier
+        res = (vars.find(curExpr.value_.get<0>()) != vars.end()); 
+#if VERBOSE
+        if (res)
+          cerr << "Found " ;
+        else
+          cerr << "Coudl not find ";
+        
+        cerr << curExpr.value_.get<0>() << endl;
+#endif
+        break;
+      }
+    case 1:
+      {
+        // Integer.
+        res = true; break;
+      }
+    case 2:
+      {
+        //Unary
+        UnaryExpression curUn = curExpr.value_.get<2>();
+        res = checkIfExists(get<1>(curUn.value_), vars); break;
+      }
+    case 3:
+      {
+        // Binary
+        cerr << "Starting bin conversion" << endl;
+        BinaryExpression curBin = curExpr.value_.get<3>();
+        cerr << "Succeeded" << endl;
+        res = (checkIfExists(get<0>(curBin.value_), vars) && 
+               checkIfExists(get<2>(curBin.value_), vars)); break;
+      }
+    case 4:
+      {
+        // call
+        cerr << "Not yet handling Calls" << endl;
+        break;
+      }
+    case 5:
+      {
+        // index
+        cerr << "Not yet handling indexing" << endl;
+        break;
+      }
+    default:
+      {
+        cerr << "Unrecognized expression type!" << endl; 
+        cerr << curExpr.value_ << endl;
+        res = false; break;
+      }
+      
+    }
+  return res;
+}
 
 
 /*
@@ -56,6 +120,9 @@ using namespace wrapper;
  * Goal is to create a set of the variables in a function. Then when
  * it sees an expression, it should go "Wait, do my variables exist?",
  * and check that.
+ *
+ * This function is getting nasty quickly. Splitting it up some more
+ * would be wonderful.
  */
 int checkVars(Program& program)
 {
@@ -71,10 +138,36 @@ int checkVars(Program& program)
         {
             cerr << "Line is a " << codeLine.names[codeLine.value_] << endl;
 
-            int codeType = int(codeLine.value_);
-            // Note to Rai: ...This would be better as switch. Don't be dumb. <_<
-            if (codeType == 2)
+            Expression curExpr;
+            bool existance = true;
+
+            switch(int(codeLine.value_))
             {
+            case 0: 
+              {
+                // Simple
+                curExpr = codeLine.value_.get<0>();
+                
+                cerr << "Furthermore, it does " << 
+                        curExpr.names[curExpr.value_] << endl;
+                
+                //existance = checkIfExists(curExpr, variables);
+                //cerr << existance << endl;
+                break;
+              }
+            case 1:
+              {
+                // Return 
+                curExpr = codeLine.value_.get<1>();
+                /*
+                cerr << "Furthermore, it does " << 
+                        curExpr.names[curExpr.value_] << endl;
+                */
+                existance = checkIfExists(curExpr, variables);
+                break;
+              }
+            case 2:
+              {
                 Declarations declVars   = codeLine.value_.get<2>();
                 list<Declaration> decls = get<1>(declVars.value_);
                 for (Declaration& decl : decls)
@@ -93,25 +186,38 @@ int checkVars(Program& program)
 
                     ++varCount;
                 }
-            }
-            else if (codeType == 0)
-            {
-              // Simple
-              Expression curExpr = 
-                codeLine.value_.get<0>();
-              cerr << "Furthermore, it does " << 
-                curExpr.names[curExpr.value_] << endl;
-            }
-            else if (codeType == 1)
-            { // Return
-              Expression curExpr = 
-                codeLine.value_.get<1>();
-              cerr << "Furthermore, it does " << 
-                curExpr.names[curExpr.value_] << endl;
+                break;
+              }
+            case 3:
+              {
+              // If statement
+              cerr << "Can not support If statements yet!" << endl;
+              break;
+              }
+            case 4:
+              {
+              // for statement
+              cerr << "Can not support For statements yet!" << endl;
+              break;
+              }
+            case 5:
+              {
+              // Blocks
+              cerr << "Derp, blocks are too much effort right now" << endl;
+              break;
+              }
+            default:
+              {
+              cerr << "No idea what's going on." << endl;
+              break;
+              }
             }
 
+            if (not existance) 
+              {
+                cerr << "WHOA, a variable doesn't exist!" << endl; 
+              }
         }
-
     }
     return varCount;
 }
@@ -139,11 +245,11 @@ int main(int argc, char* argv[])
 
     // Actually build the tree
 
-#if VERBOSE
+#if VERBOSE>1
     cerr << input << endl;
 #endif
     AST temp = Parser::getPParser().parse("program",input);
-#if VERBOSE
+#if VERBOSE>1
     cerr << temp << endl;
 #endif
 
