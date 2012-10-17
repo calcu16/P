@@ -68,8 +68,17 @@ namespace packrat
             type value_; // Marks which type has been constructed
         };
         
-        
-        typedef std::string Identifier;
+        struct Identifier
+        {
+            typedef std::string type;
+            static const int names_l = 1;
+            typedef table_t<names_l>::type names_t;
+            static names_t names;
+            int start_, end_;
+            type value_;
+            
+            operator std::string() const;
+        };
 
        /*
         * Defines Unary Operations.
@@ -315,8 +324,8 @@ namespace packrat
         
        /*
         * Parameters are a type paired with a name with an additional
-        * specifier of if they are `const` or not (not implies that
-        * this is a return value). These get passed into functions.
+        * specifier of if they are `const` or not. These get passed
+        * into functions.
         */
         struct Parameter
         {
