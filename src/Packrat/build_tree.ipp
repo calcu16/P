@@ -266,6 +266,8 @@ BuildTree<T>::BuildTree(const AST& tree)
     : t_(new T()) // initialize tree itself
 {
     // Leverages makeTree to construct the tree from the AST
+    t_->start_ = tree.startc();
+    t_->end_    = tree.endc();
     t_->value_ = BuildTree<typename T::type>::template
             makeTree<T::names_l>(tree["value"], T::names);
 }

@@ -64,6 +64,7 @@ namespace packrat
             static const int names_l = 1;
             typedef table_t<names_l>::type names_t;
             static names_t names;  // Holds the names of all types for printing
+            int start_, end_;
             type value_; // Marks which type has been constructed
         };
         
@@ -84,6 +85,7 @@ namespace packrat
             static const int prec = 12;  // Defines precedence for printing
             typedef table_t<names_l>::type names_t;
             static names_t names;  // Contains names of operators
+            int start_, end_;
             type value_; // Marks which UnaryOp has been constructed
         };
         
@@ -114,6 +116,7 @@ namespace packrat
             // Defines if assoc[i] is Left or Right associative
             static assoc_t assoc;
             static names_t names;  // Defines how to print names[i]
+            int start_, end_;
             type value_; // Marks what type of BinOp has been constructed
         };
         
@@ -137,6 +140,7 @@ namespace packrat
             static const int names_l = 6;
             typedef table_t<names_l>::type names_t;
             static names_t names; // Defines how to print Expressions
+            int start_, end_;
             type value_; // Marks which Expression was constructed
         };
         
@@ -155,6 +159,7 @@ namespace packrat
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
+            int start_, end_;
             type value_;
         };
         
@@ -175,8 +180,8 @@ namespace packrat
             static names_t names;
             // Often Indexes are calculated from something, so our
             // value is the result of expressions.
+            int start_, end_;
             std::tuple<Expression, Expression> value_;
-            
             operator Expression() const;
         };
         
@@ -191,8 +196,8 @@ namespace packrat
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
+            int start_, end_;
             std::tuple<Expression, BinOp, Expression> value_;
-            
             operator Expression() const;
         };
        /*
@@ -205,6 +210,7 @@ namespace packrat
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
+            int start_, end_;
             std::tuple<UnaryOp, Expression> value_;
         };
         
@@ -219,6 +225,7 @@ namespace packrat
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
+            int start_, end_;
             type value_;
         };
         
@@ -233,7 +240,7 @@ namespace packrat
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
-            // Is this variable using an Initializer or the Default?
+            int start_, end_;
             type value_;
         };
         
@@ -247,6 +254,7 @@ namespace packrat
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
+            int start_, end_;
             type value_;
         };
         
@@ -268,8 +276,8 @@ namespace packrat
                                    ForLoop,
                                    Block> type;
             static names_t names;
+            int start_, end_;
             type value_;
-            
             operator Block() const;
         };
         
@@ -286,6 +294,7 @@ namespace packrat
             static const int names_l = 4;
             typedef table_t<names_l>::type names_t;
             static names_t names;
+            int start_, end_;
             type value_;
         };
         
@@ -300,6 +309,7 @@ namespace packrat
             static const int names_l = 2;
             typedef table_t<names_l>::type names_t;
             static names_t names;
+            int start_, end_;
             type value_;
         };
         
@@ -315,6 +325,7 @@ namespace packrat
             typedef table_t<names_l>::type names_t;
             typedef std::tuple<bool, Type, Expression> type;
             static names_t names;
+            int start_, end_;
             type value_;
         };
         
@@ -333,6 +344,7 @@ namespace packrat
             typedef table_t<names_l>::type names_t;
             typedef std::tuple<Type, Identifier, Parameters, Block> type;
             static names_t names;
+            int start_, end_;
             type value_;
         };
         typedef std::list<Function> Program;
