@@ -94,16 +94,20 @@ bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
     case 4:
       {
         // call
-        cerr << "Assuming function call is defined..." << endl;
+        Call curCall = curExpr.value_.get<4>();
+        for (Expression& arg : get<1>(curCall.value_)) {
+          res = res && checkIfExists(arg, vars);
+        }
+        break;
         // NOTE TO RAI: Should check the environment to see if the
         // function is declared here.
-        break;
       }
     case 5:
       {
         // index
-        cerr << "Not yet handling indexing" << endl;
-        break;
+        Index curInd = curExpr.value_.get<5>();
+        res = (checkIfExists(get<0>(curInd.value_), vars) &&
+               checkIfExists(get<1>(curInd.value_), vars)); break;
       }
     default:
       {
@@ -116,6 +120,143 @@ bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
   return res;
 }
 
+
+void statementCheck(Statement& codeLine,
+                    unordered_set<Identifier>& variables,  
+                    int& varCount)
+{
+    //cerr << "Line is a " << codeLine.names[codeLine.value_] << endl;
+  
+    Expression curExpr;
+    bool existance = true;
+  
+    switch(int(codeLine.value_))
+    {
+        case 0: 
+        {
+            // Simple
+            curExpr = codeLine.value_.get<0>();
+            /*
+              cerr << "Furthermore, it does " << 
+              curExpr.names[curExpr.value_] << endl;
+            */
+            existance = checkIfExists(curExpr, variables);
+            break;
+        }
+        case 1:
+        {
+            // Return 
+            curExpr = codeLine.value_.get<1>();
+            /*
+              cerr << "Furthermore, it does " << 
+              curExpr.names[curExpr.value_] << endl;
+            */
+            existance = checkIfExists(curExpr, variables);
+            break;
+        }
+        case 2:
+        {
+            Declarations declVars   = codeLine.value_.get<2>();
+            list<Declaration> decls = get<1>(declVars.value_);
+            for (Declaration& decl : decls)
+            {
+                //cerr << "Declared a " << decl.names[decl.value_] << endl;
+                Expression expr;
+                if (int(decl.value_) == 0) {
+                    Initializer initer = decl.value_.get<0>();
+                    expr = get<0>(initer.value_);
+#if VERBOSE
+                    cerr << "Declared Initer for " << expr.value_.get<0>() 
+                         << endl;
+#endif
+                    variables.insert(expr.value_.get<0>());
+                    expr = get<1>(initer.value_); // for existsCheck
+                } else {
+                    expr = decl.value_.get<1>();
+#if VERBOSE                      
+                    cerr << "Declared " << expr.value_.get<0>() << endl;
+#endif
+                    variables.insert(expr.value_.get<0>());
+                }
+                existance = checkIfExists(expr, variables);
+            
+                ++varCount;
+            }
+            break;
+        }
+        case 3:
+        {
+            // If statement
+            If curIf = codeLine.value_.get<3>();
+            existance = checkIfExists(get<0>(curIf.value_), variables);
+
+            unordered_set<Identifier> tmpVars(variables);
+            statementCheck(get<1>(curIf.value_), tmpVars, varCount);
+            break;
+        }
+        case 4:
+        {
+            // for statement
+            ForLoop curLoop = codeLine.value_.get<4>();
+            // Need to check the init, cond, inc, and body.
+            existance = checkIfExists(get<0>(curLoop.value_), variables) &&
+              checkIfExists(get<1>(curLoop.value_), variables) &&
+              checkIfExists(get<2>(curLoop.value_), variables);
+
+            unordered_set<Identifier> tmpVars(variables);
+            statementCheck(get<3>(curLoop.value_), tmpVars, varCount);
+            break;
+        }
+        case 5:
+        {
+            // Blocks
+            Block curBlock = codeLine.value_.get<5>();
+            for (Statement& blockLine : curBlock) {
+                statementCheck(blockLine, variables, varCount);
+            }
+            break;
+        }
+        default:
+        {
+            cerr << "No idea what's going on." << endl;
+            break;
+        }
+    }
+}
+
+void insertVar(Expression& pVal, unordered_set<Identifier>& variables)
+{
+  switch(int(pVal.value_))
+    {
+    case 0:
+      {
+      Identifier ident = pVal.value_.get<0>();
+      cerr << "Declared parameter: " << ident << endl;
+      variables.insert(ident);
+      break;
+      }
+    case 1:
+      {
+      // Have an int. This is dumb.
+      cerr << "An integer was declared as a parameter. ..." << endl;
+      break;
+      }
+    case 2:
+      {
+      UnaryExpression curExpr = pVal.value_.get<2>();
+      insertVar(get<1>(curExpr.value_), variables);
+      break;
+      }
+    // Not clear to me what other expressions could be doing as a
+    // function parameter. MAAAAYBE BinaryExpression, but uhhh that's
+    // kinda awkward.
+    default:
+      {
+      cerr << "Unknown Expresion in function parameter." << endl;
+      break;
+      }
+    }  
+}
 
 /*
  * Kinda dumb test function to experiment with extracting data from P
@@ -142,96 +283,14 @@ int checkVars(Program& program)
         
         Parameters params = get<2>(func.value_);
         for (Parameter& param : params)
-          {
-            cerr << "Saw some parameter, but don't understand it yet." << endl;
-            Expression pVal = get<2>(param.value_);
-            // Will need to look at the Expression, see if we can
-            //extract a name from it.  
-            //variables.insert();
-          }
+        {
+          insertVar(get<2>(param.value_), variables);
+        }
 
         Block& funcBody = get<3>(func.value_);
         for (Statement& codeLine : funcBody) 
         {
-          //cerr << "Line is a " << codeLine.names[codeLine.value_] << endl;
-
-            Expression curExpr;
-            bool existance = true;
-
-            switch(int(codeLine.value_))
-            {
-            case 0: 
-              {
-                // Simple
-                curExpr = codeLine.value_.get<0>();
-                /*
-                cerr << "Furthermore, it does " << 
-                        curExpr.names[curExpr.value_] << endl;
-                */
-                existance = checkIfExists(curExpr, variables);
-                break;
-              }
-            case 1:
-              {
-                // Return 
-                curExpr = codeLine.value_.get<1>();
-                /*
-                cerr << "Furthermore, it does " << 
-                        curExpr.names[curExpr.value_] << endl;
-                */
-                existance = checkIfExists(curExpr, variables);
-                break;
-              }
-            case 2:
-              {
-                Declarations declVars   = codeLine.value_.get<2>();
-                list<Declaration> decls = get<1>(declVars.value_);
-                for (Declaration& decl : decls)
-                {
-                  //cerr << "Declared a " << decl.names[decl.value_] << endl;
-                    if (int(decl.value_) == 0) {
-                      Initializer initer = decl.value_.get<0>();
-                      Expression expr = get<0>(initer.value_);
-#if VERBOSE
-                      cerr << "Declared " << expr.value_.get<0>() << endl;
-#endif
-                      variables.insert(expr.value_.get<0>());
-                    } else {
-                      Expression expr = decl.value_.get<1>();
-#if VERBOSE                      
-                      cerr << "Declared " << expr.value_.get<0>() << endl;
-#endif
-                      variables.insert(expr.value_.get<0>());
-                    }
-
-                    ++varCount;
-                }
-                break;
-              }
-            case 3:
-              {
-              // If statement
-              cerr << "Can not support If statements yet!" << endl;
-              break;
-              }
-            case 4:
-              {
-              // for statement
-              cerr << "Can not support For statements yet!" << endl;
-              break;
-              }
-            case 5:
-              {
-              // Blocks
-              cerr << "Derp, blocks are too much effort right now" << endl;
-              break;
-              }
-            default:
-              {
-              cerr << "No idea what's going on." << endl;
-              break;
-              }
-            }
+          statementCheck(codeLine, variables, varCount);
         }
     }
     return varCount;
