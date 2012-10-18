@@ -52,6 +52,7 @@ namespace packrat
     };
     
     
+    
     /*
      * A trait indicating the conversion of a list to a fold-left tree
      */
@@ -68,11 +69,12 @@ namespace packrat
     template<typename T>
     struct BuildTree
     {
+        typedef typename table_t<1>::type name_t;
         typedef T return_t;    // typedef to make return types for functions
         T* t_;                 // stored value
         BuildTree(const AST&); // function to build a tree from an abstract 
                                //   syntax tree
-    
+        BuildTree(const AST&, name_t);
         /* static function to make a tree based upon which item specified by
          * the AST among the values enumerated in the table_t.
          */

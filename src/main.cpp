@@ -49,7 +49,7 @@ using namespace packrat::pst;
 using namespace wrapper;
 
 
-bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
+bool checkIfExists(Expression curExpr, unordered_set<std::string>& vars)
 {
   bool res = true;
   string badVar = "";
@@ -58,7 +58,8 @@ bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
     case 0:
       {
         // Identifier
-        res = (vars.find(curExpr.value_.get<0>()) != vars.end()); 
+        string ident = string(curExpr.value_.get<0>());
+        res = (vars.find(ident) != vars.end()); 
 #if VERBOSE
         if (res)
           cerr << "Found " ;
@@ -122,7 +123,7 @@ bool checkIfExists(Expression curExpr, unordered_set<Identifier>& vars)
 
 
 void statementCheck(Statement& codeLine,
-                    unordered_set<Identifier>& variables,  
+                    unordered_set<std::string>& variables,  
                     int& varCount)
 {
     //cerr << "Line is a " << codeLine.names[codeLine.value_] << endl;
@@ -190,7 +191,7 @@ void statementCheck(Statement& codeLine,
             If curIf = codeLine.value_.get<3>();
             existance = checkIfExists(get<0>(curIf.value_), variables);
 
-            unordered_set<Identifier> tmpVars(variables);
+            unordered_set<std::string> tmpVars(variables);
             statementCheck(get<1>(curIf.value_), tmpVars, varCount);
             break;
         }
@@ -203,7 +204,7 @@ void statementCheck(Statement& codeLine,
               checkIfExists(get<1>(curLoop.value_), variables) &&
               checkIfExists(get<2>(curLoop.value_), variables);
 
-            unordered_set<Identifier> tmpVars(variables);
+            unordered_set<std::string> tmpVars(variables);
             statementCheck(get<3>(curLoop.value_), tmpVars, varCount);
             break;
         }
@@ -224,7 +225,7 @@ void statementCheck(Statement& codeLine,
     }
 }
 
-void insertVar(Expression& pVal, unordered_set<Identifier>& variables)
+void insertVar(Expression& pVal, unordered_set<std::string>& variables)
 {
   switch(int(pVal.value_))
     {
@@ -276,7 +277,7 @@ int checkVars(Program& program)
     int varCount = 0;
     for (Function& func : program)
     {
-        unordered_set<Identifier> variables; 
+        unordered_set<std::string> variables; 
 
         string name = get<1>(func.value_);
         cerr << "Processing " << name << endl;

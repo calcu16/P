@@ -85,3 +85,21 @@ BuildTree<string>::BuildTree(const AST& tree)
         t_ = new string(*tree["value"]);
     }
 }
+
+template<>
+BuildTree<string>::BuildTree(const AST& tree, name_t)
+{
+    if(*tree["value"]["type"] == "StringConst")
+    {
+        // FIXME
+        t_ = NULL;
+    }
+    else if(*tree["value"]["type"] == "Ident")
+    {
+        t_ = new string(*tree["value"]["value"]);
+    }
+    else
+    {
+        t_ = new string(*tree["value"]);
+    }
+}

@@ -30,7 +30,7 @@ either expressed or implied, of the FreeBSD Project.
 */
 #ifndef PST_HPP
 #define PST_HPP
-
+#include <iostream>
 #include <string>
 #include <list>
 #include <tuple>
@@ -54,6 +54,8 @@ namespace packrat
         struct ForLoop;
         struct If;
         
+        static const int nonames_l = 1;
+        typedef table_t<nonames_l>::type nonames_t;
        /*
         * Defines a type (e.g, Simple)
         */
@@ -71,15 +73,15 @@ namespace packrat
         struct Identifier
         {
             typedef std::string type;
-            static const int names_l = 1;
-            typedef table_t<names_l>::type names_t;
+            static const int names_l = nonames_l;
+            typedef nonames_t names_t;
             static names_t names;
             int start_, end_;
             type value_;
             
             operator std::string() const;
         };
-
+        std::ostream& operator<<(std::ostream&,Identifier);
        /*
         * Defines Unary Operations.
         * 

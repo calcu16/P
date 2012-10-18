@@ -54,7 +54,7 @@ const Parser& Parser::getPParser()
             "ELSE",         "else![a-zA-Z_]{SEP}",
             "RETURN",       "return![a-zA-Z_]{SEP}",
             "FOR",          "for![a-zA-Z_]{SEP}",
-            "VOID",         "void![a-zA-Z_]{SEP}",
+            "VOID",         "<value:void>![a-zA-Z_]{SEP}",
             "CONST",        "const![a-zA-Z_]{SEP}",
             "KEYWORD",      "{IF}|{ELSE}|{RETURN}|{VOID}|{FOR}",
             /** Symbols **/
@@ -68,14 +68,16 @@ const Parser& Parser::getPParser()
             "COMMA",        ",{SEP}",
             "ASSIGN",       "={SEP}",
             /** Values **/
-            "IDENT",        "<type=Ident>!({KEYWORD}|[0-9])"
-                            "<value:[a-zA-Z0-9]+_>{SEP}",
+            "IDENT",        "<value:"
+                              "<type=Ident>!({KEYWORD}|[0-9])"
+                              "<value:[a-zA-Z0-9]+_>{SEP}"
+                            ">",
             "INT",          "<type=int><value:"
                             "(0[xX][0-9a-fA-F]+_|[0-7]+_|!0[0-9]+_)>{SEP}",
             "CONSTANT",     "{INT}",
             /* Parser */
             "typename",     "<value:<type=Simple>"
-                                "<value:{IDENT}|{VOID}>>",
+                                "({IDENT}|{VOID})>",
             "atom",         "{LPAREN}{expression}{RPAREN}|"
                             "<value:<type=Ident><value:{IDENT}>|"
                             "<type=Int><value:{CONSTANT}>>",

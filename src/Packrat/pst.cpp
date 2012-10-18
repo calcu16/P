@@ -42,6 +42,8 @@ using namespace packrat::pst;
 
 Type::names_t               Type::names
     = {"Simple"};
+Identifier::names_t         Identifier::names
+    = {""};
 UnaryOp::names_t            UnaryOp::names
     = {"-","~","!","&","*"};
 
@@ -117,4 +119,14 @@ Statement::operator Block() const
     if((int)value_ == BLOCK)
         return value_.get<BLOCK>();
     return Block(1, *this);
+}
+
+Identifier::operator string() const
+{
+  return value_;
+}
+
+ostream& packrat::pst::operator<<(ostream& out, Identifier i)
+{
+  return out << string(i);
 }

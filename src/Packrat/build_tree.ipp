@@ -285,6 +285,9 @@ BuildTree<unsigned long long int>::BuildTree(const AST& tree);
 template<>
 BuildTree<std::string>::BuildTree(const AST& tree);
 
+template<>
+BuildTree<std::string>::BuildTree(const AST& tree, name_t names);
+
 /* List tree constructor */
 template<typename L>
 BuildTree<std::list<L> >::BuildTree(const AST& tree)
